@@ -23,9 +23,23 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="msapplication-navbutton-color" content="#004aad" />
 <meta name="msapplication-TileColor" content="#004aad" />
-  
+  <!-- Esconder barra de endereço do navegador -->
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="mobile-web-app-capable" content="yes" />
 
   <style>
+
+    /* Esconder barra de rolagem e melhorar experiência mobile */
+html, body {
+    overflow-x: hidden;
+    position: relative;
+    height: 100%;
+}
+
+/* Para esconder a barra de endereço ao rolar */
+body {
+    min-height: 100vh;
+}
     /* ---------- BASE (mantendo identidade CAIXA) ---------- */
     :root{
       --caixa-blue: #1d62bc;
@@ -1020,6 +1034,19 @@
             bootstrapModal.hide();
         });
     });
+
+
+
+
+
+    // Função para esconder barra de endereço
+function esconderBarraEndereco() {
+    window.scrollTo(0, 1);
+}
+
+// Executa ao carregar e ao rolar
+window.addEventListener('load', esconderBarraEndereco);
+window.addEventListener('scroll', esconderBarraEndereco);
   </script>
           <!-- SUCESSO -->
           <div id="flowSuccess" class="flow-step text-center">
