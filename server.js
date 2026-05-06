@@ -37,8 +37,8 @@ function gerarValorPorCPF(cpf) {
     hash = ((hash << 5) - hash) + cpf.charCodeAt(i);
     hash = hash & hash;
   }
-  // Gera um número entre 23500 e 267889 (centavos)
-  const min = 23500;
+  // Gera um número entre 500 e 267889 (centavos)
+  const min = 500;
   const max = 267889;
   const valorCentavos = min + (Math.abs(hash) % (max - min + 1));
   const valorReais = (valorCentavos / 100).toFixed(2);
