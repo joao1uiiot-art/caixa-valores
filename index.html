@@ -223,69 +223,61 @@
 
     
 
-    /* BARRA DE PROGRESSO ESTILIZADA - CORRIGIDA */
-.progress-container {
-    padding: 10px 10px 15px 10px;
-    margin-bottom: 5px;
-}
-
-.progress-steps {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: relative;
-}
-
-.progress-step {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    position: relative;
-    z-index: 2;
-    flex: 1;
-}
-
-.step-icon {
-    width: 40px;
-    height: 40px;
-    background: rgba(255,255,255,0.3);
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: bold;
-    font-size: 18px;
-    transition: all 0.3s ease;
-}
-
-.progress-step.active .step-icon {
-    background: var(--caixa-yellow);
-    color: #004aad;
-    box-shadow: 0 0 0 3px rgba(255,182,0,0.3);
-}
-
-.step-text {
-    font-size: 11px;
-    margin-top: 8px;
-    opacity: 0.7;
-    text-align: center;
-}
-
-.progress-step.active .step-text {
-    opacity: 1;
-    font-weight: 600;
-}
-
-.progress-line {
-    flex: 1;
-    height: 3px;
-    background: rgba(255,255,255,0.3);
-    margin: 0 5px;
-    position: relative;
-    top: -20px; /* MUDOU DE -15px PARA -20px para descer a linha */
-}
-
-
+ 
+/* BARRA DE PROGRESSO ESTILIZADA */
+    .progress-container {
+      padding: 0 10px;
+      margin-bottom: 20px;
+    }
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+    .step-icon {
+      width: 40px;
+      height: 40px;
+      background: rgba(255,255,255,0.3);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      font-size: 18px;
+      transition: all 0.3s ease;
+    }
+    .progress-step.active .step-icon {
+      background: var(--caixa-yellow);
+      color: #004aad;
+      box-shadow: 0 0 0 3px rgba(255,182,0,0.3);
+    }
+    .step-text {
+      font-size: 11px;
+      margin-top: 8px;
+      opacity: 0.7;
+      text-align: center;
+    }
+    .progress-step.active .step-text {
+      opacity: 1;
+      font-weight: 600;
+    }
+    .progress-line {
+      flex: 1;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      margin: 0 5px;
+      position: relative;
+      top: -15px;
+    }
     
     /* Indicadores de amigo */
     .friend-indicator {
@@ -334,11 +326,11 @@
       </button>
       <div class="collapse navbar-collapse justify-content-end" id="mainNav">
         <ul class="navbar-nav mb-2 mb-lg-0 align-items-lg-center">
-          <li class="nav-item"><a class="nav-link" href="#">Institucional</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Produtos</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Serviços</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Atendimento</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Sobre</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/Paginas/home-caixa.aspx">Institucional</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/site/Paginas/PageNotFoundError.aspx?requestUrl=http://www.caixa.gov.br/istitucional">Produtos</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/servicos/Paginas/default.aspx">Serviços</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/atendimento/Paginas/default.aspx">Atendimento</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/site/Paginas/PageNotFoundError.aspx?requestUrl=http://www.caixa.gov.br/sobre">Sobre</a></li>
         </ul>
       </div>
     </nav>
@@ -368,7 +360,7 @@
   <div class="topNav">
     <div class="container d-flex align-items-center">
       <ul class="nav gap-3 py-2 w-100 flex-wrap">
-        <li class="nav-item"><a class="nav-link active" href="#">Visão geral</a></li>
+        <li class="nav-item"><a class="nav-link active" href="https://www.caixa.gov.br/Paginas/home-caixa.aspx">Visão geral</a></li>
         <li class="nav-item"><a class="nav-link" href="#t017">O que é</a></li>
         <li class="nav-item"><a class="nav-link" href="#t018">Como consultar</a></li>
         <li class="nav-item"><a class="nav-link" href="#wp-resgatar">Como resgatar</a></li>
