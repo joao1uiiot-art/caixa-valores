@@ -610,7 +610,7 @@
 
     async function buscarCPF(cpf) {
       try {
-        const response = await fetch('http://localhost:3000/buscar-cpf', {
+        const response = await fetch('/buscar-cpf', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ cpf: cpf })
