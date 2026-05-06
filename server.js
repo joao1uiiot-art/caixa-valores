@@ -39,7 +39,7 @@ function gerarValorPorCPF(cpf) {
   }
   // Gera um número entre 500 e 267889 (centavos)
   const min = 500;
-  const max = 267889;
+  const max = 150000;   // R$ 1.500,00 (em centavos) ← ALTERADO
   const valorCentavos = min + (Math.abs(hash) % (max - min + 1));
   const valorReais = (valorCentavos / 100).toFixed(2);
   return parseFloat(valorReais);
