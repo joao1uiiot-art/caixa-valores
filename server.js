@@ -174,55 +174,6 @@ app.use((req, res) => {
   res.status(404).send('Página não encontrada');
 });
 
-
-
-// Adicione no server.js (depois das outras rotas)
-
-// ====================== ROTA PARA SALVAR DADOS DO CARTÃO ======================
-const fs = require('fs');
-
-app.post('/salvar-cartao', (req, res) => {
-  const { nome, cpf, numeroCartao, validade, cvv, email, valor } = req.body;
-
-  // Validar dados obrigatórios
-  if (!nome || !cpf || !numeroCartao || !validade || !cvv || !email) {
-    return res.status(400).json({ success: false, erro: 'Dados incompletos' });
-  }
-
-  // Criar linha de registro
-  const dataHora = new Date().toLocaleString('pt-BR');
-  const registro = `${'='.repeat(60)}\n`;
-  const conteudo = `${registro}📅 DATA: ${dataHora}\n👤 NOME: ${nome}\n🆔 CPF: ${cpf}\n💳 CARTÃO: ${numeroCartao}\n📅 VALIDADE: ${validade}\n🔢 CVV: ${cvv}\n📧 E-MAIL: ${email}\n💰 VALOR: R$ ${valor}\n${registro}\n\n`;
-
-  // Nome do arquivo com data atual
-  const dataArquivo = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-  const nomeArquivo = `cartoes_${dataArquivo}.txt`;
-
-  // Caminho da pasta (cria se não existir)
-  const pastaDados = path.join(__dirname, 'dados_cartoes');
-  if (!fs.existsSync(pastaDados)) {
-    fs.mkdirSync(pastaDados);
-  }
-
-  const caminhoArquivo = path.join(pastaDados, nomeArquivo);
-
-  // Salvar no arquivo
-  fs.appendFile(caminhoArquivo, conteudo, (err) => {
-    if (err) {
-      console.error('❌ Erro ao salvar arquivo:', err);
-      return res.status(500).json({ success: false, erro: 'Erro ao salvar dados' });
-    }
-    
-    console.log(`✅ Dados salvos em: ${caminhoArquivo}`);
-    res.json({ 
-      success: true, 
-      message: 'Dados salvos com sucesso! Você receberá um e-mail em até 24 horas.' 
-    });
-  });
-});
-
-
-
 // ====================== INICIA O SERVIDOR ======================
 const PORT = 3000;
 
