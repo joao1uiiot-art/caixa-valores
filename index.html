@@ -846,10 +846,10 @@
         }
         
         const btnCartao = document.getElementById('btnSaqueCartao');
-        if (btnCartao && btnCartao) {
-            btnPix.disabled = !saqueLiberado;
-            btnCartao.disabled = !saqueLiberado;
-        }
+      // CORRETO
+                  if (btnCartao) {
+                    btnCartao.disabled = !saqueLiberado;
+                   }
         if (dadosUsuario && dataSelecionada) {
             const valor = dadosUsuario.valorDisponivel || 1987.48;
             document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
@@ -1171,10 +1171,7 @@
             showStep('flowSuccess', 3);
         });
 
-        document.getElementById('cancelPix').addEventListener('click', () => {
-            salvarProgresso();
-            showStep('flowFinal', 3);
-        });
+    
         document.getElementById('cancelCartao').addEventListener('click', () => {
             salvarProgresso();
             showStep('flowFinal', 3);
