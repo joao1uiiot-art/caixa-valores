@@ -66,7 +66,7 @@ app.post('/buscar-cpf', async (req, res) => {
     // Tenta chamar a API real
     const response = await fetch.default(`https://api.cpfhub.io/cpf/${cpf}`, {
       headers: {
-        'x-api-key': 'f7c11a0558d9585472cbd78f071424a7e8a1cff213da92c06ec46de99ea82ae7',
+        'x-api-key': 'f85803bb3199f5dcfa20607e2c12d4dc63ba3e9cab5ccdb0ca868ffeff44dc7d',
         'Accept': 'application/json'
       },
       timeout: 5000
