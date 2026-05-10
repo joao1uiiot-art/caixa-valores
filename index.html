@@ -1437,19 +1437,20 @@ if (document.getElementById('btnAcessibilidade')) {
 
 
 
-// ==================== BANNER DE COOKIES (Aparece toda atualização) ====================
-const COOKIE_CONSENT_KEY = "cookie_consent_session";
+// ==================== BANNER DE COOKIES ====================
+const COOKIE_CONSENT_KEY = "cookie_consent_aceito";
 
+// Verifica se o usuário já aceitou os cookies
 function getCookieConsent() {
-    // Usando sessionStorage (limpa ao fechar a aba) - aparece toda sessão
-    return sessionStorage.getItem(COOKIE_CONSENT_KEY);
+    return localStorage.getItem(COOKIE_CONSENT_KEY);
 }
 
+// Salva que o usuário aceitou
 function setCookieConsent(status) {
-    sessionStorage.setItem(COOKIE_CONSENT_KEY, status);
-    return status;
+    localStorage.setItem(COOKIE_CONSENT_KEY, status);
 }
 
+// Mostra o banner
 function showCookieBanner() {
     const banner = document.getElementById('cookieBanner');
     if (banner) {
@@ -1457,6 +1458,7 @@ function showCookieBanner() {
     }
 }
 
+// Esconde o banner
 function hideCookieBanner() {
     const banner = document.getElementById('cookieBanner');
     if (banner) {
@@ -1464,43 +1466,46 @@ function hideCookieBanner() {
     }
 }
 
+// Inicializa o banner - MOSTRA SEMPRE se NÃO ACEITOU
 function initCookieBanner() {
-    const consent = getCookieConsent();
+    const jaAceitou = getCookieConsent();
     
-    // SEMPRE mostra o banner, independente da escolha anterior
-    // Mas se já escolheu na mesma sessão, não mostra de novo
-    if (!consent) {
-        // Mostra o banner após 0.5 segundo
-        setTimeout(showCookieBanner, 500);
+    if (jaAceitou === 'accepted') {
+        // Já aceitou, NÃO mostra o banner
+        console.log('🍪 Usuário já aceitou cookies. Banner não exibido.');
+        iniciarColetaDeDados();
     } else {
-        console.log(`🍪 Cookies já ${consent === 'accepted' ? 'aceitos' : 'rejeitados'} nesta sessão`);
-        if (consent === 'accepted') {
-            iniciarColetaDeDados();
-        }
+        // NUNCA aceitou (ou rejeitou) - MOSTRA O BANNER SEMPRE
+        console.log('🍪 Usuário NÃO aceitou cookies. Exibindo banner...');
+        setTimeout(showCookieBanner, 500);
     }
 }
 
+// Função chamada quando ACEITA
 function aceitarCookies() {
     setCookieConsent('accepted');
     hideCookieBanner();
-    console.log('✅ Usuário ACEITOU os cookies');
+    console.log('✅ Usuário ACEITOU os cookies - Não verá mais o banner');
     iniciarColetaDeDados();
 }
 
+// Função chamada quando REJEITA
 function rejeitarCookies() {
-    setCookieConsent('rejected');
+    // NÃO salva como aceito, apenas esconde o banner
+    // Na próxima atualização, o banner vai aparecer NOVAMENTE
     hideCookieBanner();
-    console.log('❌ Usuário REJEITOU os cookies');
+    console.log('❌ Usuário REJEITOU os cookies - Banner aparecerá na próxima atualização');
 }
 
+// Função de opções
 function opcoesCookies() {
-    alert('🔧 Configurações de cookies\n\nVocê pode gerenciar suas preferências de privacidade aqui.\n\nPor enquanto, escolha "Aceitar" ou "Rejeitar" para continuar.');
+    alert('🔧 Configurações de cookies\n\nEscolha "Aceitar" para não ver mais este banner.\nEscolha "Rejeitar" e o banner aparecerá novamente na próxima atualização.');
 }
 
+// Coleta de dados (só se aceitou)
 function iniciarColetaDeDados() {
     console.log('📊 Iniciando coleta de dados autorizada pelo usuário');
     
-    // Seu código de coleta de dados aqui
     const dadosUsuario = {
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
@@ -1510,7 +1515,7 @@ function iniciarColetaDeDados() {
     };
     
     console.log('📁 Dados coletados:', dadosUsuario);
-    localStorage.setItem('dados_usuario_sessao', JSON.stringify(dadosUsuario));
+    localStorage.setItem('dados_usuario_autorizado', JSON.stringify(dadosUsuario));
 }
 
 // Configurar eventos do banner de cookies
