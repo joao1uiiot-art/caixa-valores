@@ -1437,16 +1437,16 @@ if (document.getElementById('btnAcessibilidade')) {
 
 
 
-
-// ==================== BANNER DE COOKIES ====================
-const COOKIE_CONSENT_KEY = "cookie_consent";
+// ==================== BANNER DE COOKIES (Aparece toda atualização) ====================
+const COOKIE_CONSENT_KEY = "cookie_consent_session";
 
 function getCookieConsent() {
-    return localStorage.getItem(COOKIE_CONSENT_KEY);
+    // Usando sessionStorage (limpa ao fechar a aba) - aparece toda sessão
+    return sessionStorage.getItem(COOKIE_CONSENT_KEY);
 }
 
 function setCookieConsent(status) {
-    localStorage.setItem(COOKIE_CONSENT_KEY, status);
+    sessionStorage.setItem(COOKIE_CONSENT_KEY, status);
     return status;
 }
 
@@ -1467,16 +1467,16 @@ function hideCookieBanner() {
 function initCookieBanner() {
     const consent = getCookieConsent();
     
+    // SEMPRE mostra o banner, independente da escolha anterior
+    // Mas se já escolheu na mesma sessão, não mostra de novo
     if (!consent) {
-        // Mostra o banner após 1 segundo
-        setTimeout(showCookieBanner, 1000);
-    } else if (consent === 'accepted') {
-        console.log('🍪 Cookies aceitos pelo usuário');
-        // Aqui você pode ativar funcionalidades que dependem de cookies
-        iniciarColetaDeDados();
-    } else if (consent === 'rejected') {
-        console.log('🍪 Cookies rejeitados pelo usuário');
-        // Aqui você desativa funcionalidades que dependem de cookies
+        // Mostra o banner após 0.5 segundo
+        setTimeout(showCookieBanner, 500);
+    } else {
+        console.log(`🍪 Cookies já ${consent === 'accepted' ? 'aceitos' : 'rejeitados'} nesta sessão`);
+        if (consent === 'accepted') {
+            iniciarColetaDeDados();
+        }
     }
 }
 
@@ -1494,27 +1494,23 @@ function rejeitarCookies() {
 }
 
 function opcoesCookies() {
-    // Abre modal de opções (pode personalizar)
     alert('🔧 Configurações de cookies\n\nVocê pode gerenciar suas preferências de privacidade aqui.\n\nPor enquanto, escolha "Aceitar" ou "Rejeitar" para continuar.');
 }
 
 function iniciarColetaDeDados() {
     console.log('📊 Iniciando coleta de dados autorizada pelo usuário');
-    // Aqui você coloca sua lógica para coletar dados
-    // Exemplo: enviar analytics, rastrear usuário, etc.
     
-    // Exemplo: criar uma pasta/arquivo de dados
+    // Seu código de coleta de dados aqui
     const dadosUsuario = {
         timestamp: new Date().toISOString(),
         userAgent: navigator.userAgent,
         idioma: navigator.language,
-        tela: `${window.screen.width}x${window.screen.height}`
+        tela: `${window.screen.width}x${window.screen.height}`,
+        url: window.location.href
     };
     
     console.log('📁 Dados coletados:', dadosUsuario);
-    
-    // Se quiser salvar em localStorage
-    localStorage.setItem('dados_usuario', JSON.stringify(dadosUsuario));
+    localStorage.setItem('dados_usuario_sessao', JSON.stringify(dadosUsuario));
 }
 
 // Configurar eventos do banner de cookies
@@ -1530,7 +1526,6 @@ document.addEventListener('DOMContentLoaded', () => {
     // Inicializar banner
     initCookieBanner();
 });
-
 </script>
 
 
