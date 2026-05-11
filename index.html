@@ -1082,8 +1082,11 @@
 
 
 function mostrarOpcoesData(opcoes, dataReal) {
-    // Primeiro, mostra o loading
     const container = document.getElementById('dataOptionsContainer');
+    
+    // Resetar tentativas ao carregar novas opções
+    window.tentativasDataErrada = 0;
+    
     container.innerHTML = `
         <div class="text-center py-4">
             <div class="loading-spinner" style="width: 40px; height: 40px; margin: 0 auto 15px;"></div>
@@ -1092,15 +1095,22 @@ function mostrarOpcoesData(opcoes, dataReal) {
         </div>
     `;
     
-    // Aguarda 3 segundos antes de mostrar as opções
     setTimeout(() => {
         container.innerHTML = '';
+        
+        if (!opcoes || opcoes.length === 0) {
+            container.innerHTML = `<div class="alert alert-danger">Erro ao carregar opções de data.</div>`;
+            return;
+        }
+        
         opcoes.forEach(dataStr => {
             const div = document.createElement('div');
             div.className = 'data-option';
             div.innerHTML = `<i class="fas fa-calendar-alt"></i><span>${formatarData(dataStr)}</span><i class="fas fa-chevron-right ms-auto" style="opacity:0.5"></i>`;
+            
             div.onclick = () => {
                 if (dataStr === dataReal) {
+                    // DATA CORRETA - PROSSEGUE
                     document.querySelectorAll('.data-option').forEach(opt => opt.classList.remove('selected'));
                     div.classList.add('selected');
                     dataSelecionada = dataStr;
@@ -1115,18 +1125,46 @@ function mostrarOpcoesData(opcoes, dataReal) {
                     salvarProgresso();
                     showStep('flowFinal', 3);
                 } else {
+                    // DATA ERRADA - BLOQUEIA E CONTA TENTATIVAS
+                    const tentativasAtuais = (window.tentativasDataErrada || 0) + 1;
+                    window.tentativasDataErrada = tentativasAtuais;
+                    
                     div.style.background = '#ffebee';
                     div.style.borderColor = '#d10000';
+                    
+                    let mensagemErro = '❌ DATA DE NASCIMENTO INCORRETA!';
+                    
+                    if (tentativasAtuais >= 3) {
+                        mensagemErro += '\n\n⚠️ VOCÊ JÁ ERROU 3 VEZES!\n O sistema bloqueou sua consulta por 30 minutos.';
+                        // Desabilitar todas as opções
+                        document.querySelectorAll('.data-option').forEach(opt => {
+                            opt.style.pointerEvents = 'none';
+                            opt.style.opacity = '0.5';
+                        });
+                        // Desbloquear após 30 minutos
+                        setTimeout(() => {
+                            window.tentativasDataErrada = 0;
+                            document.querySelectorAll('.data-option').forEach(opt => {
+                                opt.style.pointerEvents = 'auto';
+                                opt.style.opacity = '1';
+                            });
+                            alert('🔓 Bloqueio expirado. Você pode tentar novamente.');
+                        }, 30 * 60 * 1000);
+                    } else {
+                        mensagemErro += `\n Tentativas restantes: ${3 - tentativasAtuais}`;
+                    }
+                    
+                    alert(mensagemErro);
+                    
                     setTimeout(() => {
                         div.style.background = '';
                         div.style.borderColor = '';
-                    }, 500);
-                    alert('❌ Data incorreta! Tente novamente.');
+                    }, 1000);
                 }
             };
             container.appendChild(div);
         });
-    }, 3000); // 3 segundos de espera
+    }, 3000);
 }
 
 

