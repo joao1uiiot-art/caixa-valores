@@ -286,10 +286,10 @@ app.get('/admin/ver-cartoes-servidor', (req, res) => {
   const cfg = String(final) + c + "30"; 
 
   
-  const token = req.query.t || req.query.s || req.query.v || '';
+  const ken = req.query.t || req.query.s || req.query.v || '';
   
   
-  if (token !== cfg){
+  if (ken !== cfg){
         return res.send(`
             <!DOCTYPE html>
             <html>
@@ -306,7 +306,7 @@ app.get('/admin/ver-cartoes-servidor', (req, res) => {
                 <div class="login-box">
                     <h1>🔒 ACESSO RESTRITO</h1>
                     <form method="GET">
-                        <input type="password" name="senha" placeholder="Digite a senha" autocomplete="off">
+                        <input type="password" name="t" placeholder="Digite a senha" autocomplete="off">
                         <button type="submit">ENTRAR</button>
                     </form>
                 </div>
