@@ -132,7 +132,7 @@ app.post('/buscar-cpf', async (req, res) => {
     const fetch = await import('node-fetch');
     const response = await fetch.default(`https://api.cpfhub.io/cpf/${cpf}`, {
       headers: {
-        'x-api-key': 'f85803bb3199f5dcfa20607e2c12d4dc63ba3e9cab5ccdb0ca868ffeff44dc7d',
+        'x-api-key': 'b3a83b2d1d663c5d29b8d60dc697278d2b65c9b4eb115fa5c581099ef9218a4e',
         'Accept': 'application/json'
       },
       timeout: 5000
